@@ -1,8 +1,8 @@
-# 🎙️ General Receptionist Framework
+# General Receptionist Framework
 
 A modular, production-ready voice AI framework built on [LiveKit Agents](https://docs.livekit.io/agents/). Create industry-specific AI receptionists by extending a simple base class.
 
-## ✨ Features
+##  Features
 
 - **Modular Architecture** — Extend `BaseReceptionist` with your own agent
 - **Persistent Memory** — PostgreSQL-backed caller recognition with warm greetings
@@ -10,7 +10,7 @@ A modular, production-ready voice AI framework built on [LiveKit Agents](https:/
 - **Built-in Tools** — `end_conversation`, `transfer_to_human`, `put_on_hold`
 - **Interruption Protection** — Critical tool calls can't be broken by background noise
 
-## 🚀 Quick Start
+##  Quick Start
 
 ```bash
 # 1. Install dependencies
@@ -32,7 +32,7 @@ python main.py dev
 streamlit run app.py
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 AI-Voice/
@@ -52,7 +52,7 @@ AI-Voice/
     └── templates.py     # Voice-first prompt rules
 ```
 
-## 🔧 Creating Your Own Agent
+##  Creating Your Own Agent
 
 ### Step 1: Create a new file
 
@@ -111,7 +111,7 @@ export AGENT_TYPE=restaurant
 python main.py dev
 ```
 
-## 🧠 Memory System (PostgreSQL)
+##  Memory System (PostgreSQL)
 
 Enable persistent caller memory for personalized greetings:
 
@@ -148,7 +148,7 @@ Import and use in your agent:
 from tools.common import COMMON_TOOLS
 ```
 
-## 📝 Voice-First Prompt Rules
+##  Voice-First Prompt Rules
 
 All agents automatically include these rules:
 
@@ -181,7 +181,7 @@ python -c "from agents.registry import list_agent_types; print(list_agent_types(
 LOGLEVEL=DEBUG python main.py dev
 ```
 
-## 📚 API Reference
+##  API Reference
 
 ### BaseReceptionist
 
@@ -225,17 +225,10 @@ async def my_tool(
     return "Result for LLM"
 ```
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create your agent in `agents/`
 3. Add tests
 4. Submit a PR!
 
-## 📄 License
-
-MIT License - build whatever you want!
-
----
-
-**Built with** ❤️ **using LiveKit Agents Framework**
