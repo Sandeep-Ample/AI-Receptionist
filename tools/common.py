@@ -70,27 +70,6 @@ async def transfer_to_human(ctx: RunContext, reason: str) -> str:
     return f"Transfer initiated: {reason}"
 
 
-@function_tool()
-async def put_on_hold(ctx: RunContext, reason: str, duration_seconds: int = 30) -> str:
-    """
-    Put the caller on a brief hold while you look something up.
-    Use this for operations that take more than a few seconds.
-    
-    Args:
-        reason: What you're looking up (e.g., "checking appointment availability")
-        duration_seconds: How long the hold will be (default 30 seconds)
-    """
-    logger.info(f"put_on_hold called - reason: {reason}, duration: {duration_seconds}s")
-    
-    ctx.disallow_interruptions()
-    
-    ctx.session.say(f"Let me {reason}. This will just take a moment.")
-    
-    # In a real implementation, this would play hold music
-    # The BackgroundAudioPlayer handles this automatically with thinking sounds
-    
-    return f"Caller on hold for: {reason}"
-
 
 # List of common tools to include in all agents
 COMMON_TOOLS = [
