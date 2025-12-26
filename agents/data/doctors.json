@@ -1,0 +1,297 @@
+{
+  "doctors": [
+    {
+      "name": "Dr. Priti Arora",
+      "specialty": "Radiology",
+      "time_shift": "14:00-20:00",
+      "address": {
+        "street": "19 Sanganer",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302080",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Manoj Jain",
+      "specialty": "Radiology",
+      "time_shift": "12:00-18:00",
+      "address": {
+        "street": "28 Ajmer Road",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302079",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Alka Singh",
+      "specialty": "Radiology",
+      "time_shift": "10:00-17:00",
+      "address": {
+        "street": "29 Durgapura",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302078",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Rakesh Verma",
+      "specialty": "Radiology",
+      "time_shift": "09:00-15:00",
+      "address": {
+        "street": "12 Malviya Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302017",
+        "country": "India"
+      }
+    },
+
+    {
+      "name": "Dr. Neha Sharma",
+      "specialty": "Psychiatry",
+      "time_shift": "11:00-17:00",
+      "address": {
+        "street": "45 Vaishali Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302021",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Amit Kulkarni",
+      "specialty": "Psychiatry",
+      "time_shift": "13:00-19:00",
+      "address": {
+        "street": "22 Tonk Road",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302018",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Pooja Mehta",
+      "specialty": "Psychiatry",
+      "time_shift": "09:00-14:00",
+      "address": {
+        "street": "7 Civil Lines",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302006",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Sandeep Rao",
+      "specialty": "Psychiatry",
+      "time_shift": "15:00-21:00",
+      "address": {
+        "street": "18 Mansarovar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302020",
+        "country": "India"
+      }
+    },
+
+    {
+      "name": "Dr. Vikram Patel",
+      "specialty": "Urology",
+      "time_shift": "10:00-16:00",
+      "address": {
+        "street": "30 Bapu Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302015",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Anil Khanna",
+      "specialty": "Urology",
+      "time_shift": "12:00-18:00",
+      "address": {
+        "street": "9 Gopalpura",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302019",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Rohit Malhotra",
+      "specialty": "Urology",
+      "time_shift": "14:00-20:00",
+      "address": {
+        "street": "16 Shyam Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302012",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Kunal Bansal",
+      "specialty": "Urology",
+      "time_shift": "08:00-14:00",
+      "address": {
+        "street": "25 Jhotwara",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302016",
+        "country": "India"
+      }
+    },
+
+    {
+      "name": "Dr. Sanjay Mehra",
+      "specialty": "Cardiology",
+      "time_shift": "10:00-16:00",
+      "address": {
+        "street": "11 C-Scheme",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302001",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Ritu Aggarwal",
+      "specialty": "Cardiology",
+      "time_shift": "12:00-18:00",
+      "address": {
+        "street": "34 Lal Kothi",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302015",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Mahesh Gupta",
+      "specialty": "Cardiology",
+      "time_shift": "09:00-14:00",
+      "address": {
+        "street": "21 Raja Park",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302004",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Anjali Verma",
+      "specialty": "Cardiology",
+      "time_shift": "15:00-21:00",
+      "address": {
+        "street": "8 JLN Marg",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302018",
+        "country": "India"
+      }
+    },
+
+    {
+      "name": "Dr. Karan Malhotra",
+      "specialty": "Orthopedic",
+      "time_shift": "09:00-15:00",
+      "address": {
+        "street": "17 Vaishali Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302021",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Nitin Saxena",
+      "specialty": "Orthopedic",
+      "time_shift": "12:00-18:00",
+      "address": {
+        "street": "26 Jagatpura",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302017",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Pankaj Yadav",
+      "specialty": "Orthopedic",
+      "time_shift": "14:00-20:00",
+      "address": {
+        "street": "10 Mansarovar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302020",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Reena Joshi",
+      "specialty": "Orthopedic",
+      "time_shift": "08:00-13:00",
+      "address": {
+        "street": "5 Gopalpura",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302019",
+        "country": "India"
+      }
+    },
+
+    {
+      "name": "Dr. Rajesh Kumar",
+      "specialty": "General Physician",
+      "time_shift": "09:00-15:00",
+      "address": {
+        "street": "14 Jawahar Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302004",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Sunita Mishra",
+      "specialty": "General Physician",
+      "time_shift": "12:00-18:00",
+      "address": {
+        "street": "23 Shastri Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302016",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Alok Verma",
+      "specialty": "General Physician",
+      "time_shift": "14:00-20:00",
+      "address": {
+        "street": "31 Mansarovar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302020",
+        "country": "India"
+      }
+    },
+    {
+      "name": "Dr. Kavita Sharma",
+      "specialty": "General Physician",
+      "time_shift": "08:00-14:00",
+      "address": {
+        "street": "6 Vidyadhar Nagar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302039",
+        "country": "India"
+      }
+    }
+  ]
+}

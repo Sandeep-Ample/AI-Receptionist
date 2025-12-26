@@ -228,7 +228,7 @@ async def entrypoint(ctx: JobContext):
         logger.info("Voice agent started successfully")
         
         # 9. Keep alive while connected
-        while ctx.room.connection_state == rtc.ConnectionState.CONNECTED:
+        while ctx.room.connection_state == rtc.ConnectionState.CONN_CONNECTED:
             await asyncio.sleep(1)
             
     except Exception as e:
