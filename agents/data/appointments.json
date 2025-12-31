@@ -1,0 +1,26 @@
+[
+    {
+        "appointment_id": "APT-1767163195",
+        "patient_name": "Sunil Fani",
+        "mobile_number": "739182661",
+        "dob": "25-11-1999",
+        "gender": "male",
+        "reason": "fever",
+        "specialty": "General Physician",
+        "doctor_name": "Dr. Rajesh Kumar",
+        "appointment_datetime": "25-01-2026 09:00",
+        "created_at": "2025-12-31T12:09:55.630523"
+    },
+    {
+        "appointment_id": "APT-1767163568",
+        "patient_name": "Raj Jadon",
+        "mobile_number": "1234567890",
+        "dob": "02-11-1999",
+        "gender": "Not specified",
+        "reason": "I have fever.",
+        "specialty": "General Physician",
+        "doctor_name": "Dr. Rajesh Kumar",
+        "appointment_datetime": "01-02-2026 11:00",
+        "created_at": "2025-12-31T12:16:08.868534"
+    }
+]
