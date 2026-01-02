@@ -39,13 +39,18 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-# Agent state tracking handled by session events
+# Try to import RoomOptions, fallback to RoomInputOptions alias if needed
+try:
+    from livekit.agents import RoomOptions
+except ImportError:
+    RoomOptions = RoomInputOptions
 from livekit.plugins import cartesia, deepgram, openai, silero
 
 # Framework imports
 from agents.registry import get_agent_class, list_agent_types
 from memory.service import get_memory_service
 from tools.common import COMMON_TOOLS
+from tools.session_logger import UniversalLogger
 
 # Load environment variables
 load_dotenv()
@@ -61,7 +66,7 @@ logger = logging.getLogger("receptionist-framework")
 def prewarm(proc: JobProcess):
     """Prewarm function to load models before the agent starts."""
     logger.info("Prewarming: Loading Silero VAD model...")
-    proc.userdata["vad"] = silero.VAD.load()
+    proc.userdata["vad"] = silero.VAD.load(min_speech_duration=0.3, activation_threshold=0.6)
     logger.info(f"Prewarming complete. Available agents: {list_agent_types()}")
 
 
@@ -77,7 +82,9 @@ async def _generate_summary(session: AgentSession) -> Optional[str]:
     """
     try:
         # Build a summary prompt from the conversation
-        messages = session.chat_ctx.messages
+        if not session.current_agent or not session.current_agent.chat_ctx:
+             return None
+        messages = session.current_agent.chat_ctx.items
         if len(messages) < 2:
             return None
         
@@ -141,6 +148,14 @@ async def _save_summary_async(session: AgentSession, caller_id: str, caller_name
         else:
             logger.info("No summary generated - conversation too short")
             
+        # Log conversation history (async to avoid blocking entrypoint exit)
+        logger.info("=" * 40)
+        logger.info("CONVERSATION HISTORY")
+        if session.current_agent and session.current_agent.chat_ctx:
+            for msg in session.current_agent.chat_ctx.items:
+                logger.info(f"[{msg.role.upper()}]: {msg.content}")
+        logger.info("=" * 40)
+
     except Exception as e:
         logger.error(f"Error in async summary save: {e}")
 
@@ -160,6 +175,10 @@ async def entrypoint(ctx: JobContext):
             pass
     
     logger.info(f"Starting agent type: {agent_type}")
+    
+    # Initialize Universal Logger
+    session_logger = UniversalLogger(job_id=ctx.job.id, agent_type=agent_type)
+    session_logger.log("SYSTEM", "Logger initialized and starting connection sequence")
     
     # 2. Connect to the room
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
@@ -190,7 +209,7 @@ async def entrypoint(ctx: JobContext):
         vad=ctx.proc.userdata["vad"],
         stt=deepgram.STT(model="nova-2"),
         llm=openai.LLM(model="gpt-4o-mini"),
-        tts=cartesia.TTS(model="sonic-2"),
+        tts=openai.TTS(model="tts-1", voice="nova"),
         allow_interruptions=True,
     )
     
@@ -199,6 +218,11 @@ async def entrypoint(ctx: JobContext):
     
     try:
         # 7. Set up event handlers
+        session_logger.attach(session)
+        # Attach logger to session for tools to access
+        session.universal_logger = session_logger
+        
+        
         @session.on("user_input_transcribed")
         def on_user_input(event):
             if event.is_final:
@@ -221,20 +245,28 @@ async def entrypoint(ctx: JobContext):
         await session.start(
             agent=agent,
             room=ctx.room,
-            room_input_options=RoomInputOptions(
+            # Disable auto-close to handle it manually with drain=False
+            room_input_options=RoomOptions(
                 participant_identity=caller_id,
+                close_on_disconnect=False,
             ),
         )
         logger.info("Voice agent started successfully")
         
         # 9. Keep alive while connected
-        while ctx.room.connection_state == rtc.ConnectionState.CONNECTED:
-            await asyncio.sleep(1)
+        while ctx.room.connection_state == rtc.ConnectionState.CONN_CONNECTED:
+            await asyncio.sleep(0.1)
+
+        logger.info("Disconnected - shutting down session immediately")
+        session.shutdown(drain=False)
             
     except Exception as e:
         logger.error(f"Session error: {e}", exc_info=True)
         
     finally:
+        session_logger.log("SYSTEM", "Session cleanup initiated")
+        session_logger.close()
+        
         # 10. Async summarization - fire and forget
         # This allows the agent to disconnect immediately
         logger.info("Session ending - starting async summarization...")
@@ -243,11 +275,9 @@ async def entrypoint(ctx: JobContext):
         )
         
         # Print conversation for debugging
-        logger.info("=" * 40)
-        logger.info("CONVERSATION HISTORY")
-        for msg in session.chat_ctx.messages:
-            logger.info(f"[{msg.role.upper()}]: {msg.content}")
-        logger.info("=" * 40)
+        
+        # Print conversation for debugging moved to async task
+
 
 
 if __name__ == "__main__":

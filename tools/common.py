@@ -10,10 +10,15 @@ import logging
 
 from livekit.agents import RunContext, function_tool
 
+from typing import Annotated, Optional
+from memory.service import get_memory_service
+
 logger = logging.getLogger("receptionist-framework")
+from tools.session_logger import log_tool_call
 
 
 @function_tool()
+@log_tool_call
 async def end_conversation(ctx: RunContext) -> str:
     """
     End the conversation gracefully when the customer's needs are met.
@@ -46,34 +51,36 @@ async def end_conversation(ctx: RunContext) -> str:
 
 
 @function_tool()
-async def transfer_to_human(ctx: RunContext, reason: str) -> str:
+@log_tool_call
+async def update_user_info(
+    ctx: RunContext,
+    name: Annotated[Optional[str], "The user's preferred name"] = None,
+    note: Annotated[Optional[str], "A brief piece of info to remember (e.g., 'allergic to penicillin')"] = None
+) -> str:
     """
-    Transfer the caller to a human operator.
-    Call this when you cannot help the caller or they request a human.
-    
-    Args:
-        reason: Brief reason for the transfer (e.g., "complex medical question")
+    Update the caller's persistent profile. 
+    Call this as soon as the user reveals their name or an important preference.
     """
-    logger.info(f"transfer_to_human called - reason: {reason}")
+    caller_id = ctx.participant.identity
+    memory_service = get_memory_service()
     
-    ctx.disallow_interruptions()
+    # Prepare metadata (this will be merged into the existing JSONB in Postgres)
+    metadata = {"note": note} if note else {}
     
-    ctx.session.say(
-        "I'll connect you with a team member who can better assist you. "
-        "Please hold for just a moment."
+    success = await memory_service.save_user(
+        caller_id=caller_id,
+        name=name,
+        metadata=metadata
     )
     
-    # In a real implementation, this would trigger actual transfer logic
-    # For now, we just log and acknowledge
-    logger.info(f"Transfer requested: {reason}")
-    
-    return f"Transfer initiated: {reason}"
+    if success:
+        return f"Updated profile for {caller_id}. I will remember this for future calls."
+    return "I couldn't save that information right now."
 
 
 
 # List of common tools to include in all agents
 COMMON_TOOLS = [
     end_conversation,
-    transfer_to_human,
-    put_on_hold,
+    update_user_info
 ]

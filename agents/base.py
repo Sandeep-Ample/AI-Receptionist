@@ -22,6 +22,7 @@ from typing import Optional
 from livekit.agents import Agent
 
 from prompts.templates import build_prompt
+from tools.common import COMMON_TOOLS
 
 logger = logging.getLogger("receptionist-framework")
 
@@ -61,7 +62,10 @@ class BaseReceptionist(Agent):
             include_voice_rules=True
         )
         
-        super().__init__(instructions=instructions)
+        super().__init__(
+            instructions=instructions,
+            tools=COMMON_TOOLS
+        )
         
         logger.info(f"Initialized {self.__class__.__name__} agent")
         if memory_context and memory_context.get("name"):
@@ -84,7 +88,12 @@ class BaseReceptionist(Agent):
             greeting = self.GREETING_TEMPLATE
             logger.info("Sending new caller greeting")
         
-        self.session.say(greeting)
+        try:
+            logger.info(f"Attempting to say greeting: {greeting}")
+            await self.session.say(greeting)
+            logger.info("Greeting sent to audio buffer")
+        except Exception as e:
+            logger.error(f"Failed to say greeting: {e}", exc_info=True)
     
     def get_caller_name(self) -> Optional[str]:
         """Get the caller's name from memory, if available."""

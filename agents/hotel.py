@@ -16,6 +16,7 @@ from agents.registry import register_agent
 from prompts.templates import VOICE_FIRST_RULES
 
 logger = logging.getLogger("hotel-agent")
+from tools.session_logger import log_tool_call
 
 
 @register_agent("hotel")
@@ -52,6 +53,7 @@ Important guidelines:
     RETURNING_GREETING_TEMPLATE = "Welcome back, {name}! It's wonderful to hear from you again. How may I assist you today?"
 
     @function_tool()
+    @log_tool_call
     async def check_room_availability(
         self,
         ctx: RunContext,
@@ -77,6 +79,7 @@ Important guidelines:
         return f"We have a beautiful {room_type} room available from {check_in_date} to {check_out_date} at ${rate} per night. This includes complimentary breakfast and spa access."
 
     @function_tool()
+    @log_tool_call
     async def make_reservation(
         self,
         ctx: RunContext,
@@ -99,6 +102,7 @@ Important guidelines:
         return f"Your reservation is confirmed, {guest_name}. {room_type.title()} room from {check_in_date} to {check_out_date}. A confirmation email with all details will arrive shortly."
 
     @function_tool()
+    @log_tool_call
     async def get_amenities(self, ctx: RunContext) -> str:
         """
         Describe the resort's amenities and facilities.
@@ -107,6 +111,7 @@ Important guidelines:
         return "The Azure Vista features an infinity pool, full-service spa, three restaurants including a rooftop bar, private beach access, a fitness center, and complimentary yacht excursions on weekends."
 
     @function_tool()
+    @log_tool_call
     async def restaurant_recommendation(
         self,
         ctx: RunContext,
@@ -133,6 +138,7 @@ Important guidelines:
             f"For {cuisine_preference}, I'd recommend speaking with our concierge desk who can arrange a perfect dining experience.")
 
     @function_tool()
+    @log_tool_call
     async def book_spa_service(
         self,
         ctx: RunContext,
