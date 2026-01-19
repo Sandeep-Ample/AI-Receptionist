@@ -1,0 +1,51 @@
+
+==================== SESSION INITIALIZATION ====================
+[16:02:18] JOB ID: AJ_wvD4jsL5CHLZ
+[16:02:18] AGENT TYPE: hospital
+[16:02:18] START TIME: 2026-01-19T16:02:18.785441
+------------------------------------------------------------
+[16:02:18] SYSTEM: Logger initialized and starting connection sequence
+[16:02:20] SYSTEM: Attaching event listeners to session
+[16:02:20] STATE CHANGE: listening
+[16:02:21] STATE CHANGE: speaking
+[16:02:25] STATE CHANGE: listening
+[16:02:55] TRANSCRIPT (USER): Hello?
+[16:02:55] STATE CHANGE: thinking
+[16:02:56] STATE CHANGE: speaking
+[16:02:58] STATE CHANGE: listening
+[16:03:13] TRANSCRIPT (USER): Can you reschedule an appointment for me?
+[16:03:13] STATE CHANGE: thinking
+[16:03:14] STATE CHANGE: speaking
+[16:03:19] STATE CHANGE: listening
+[16:03:24] TRANSCRIPT (USER): Yeah. Sure. Seven three nine
+[16:03:25] STATE CHANGE: thinking
+[16:03:25] TRANSCRIPT (USER): one eight eight two six six one.
+[16:03:25] STATE CHANGE: listening
+[16:03:26] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:03:27] TOOL CALL: Executing: find_patient_appointments
+[16:03:27] TOOL ARGS: {'mobile_no': '7391882661'}
+[16:03:27] TOOL RESULT: I found the following:
+1: With Dr. Dr. I Kumar 8 on January 19 at 04:00 PM.
+2: With Dr. Dr. Y Kumar 24 on January 19 at 04:30 PM.
+3: With Dr. Dr. E Kumar 4 on January 22 at 09:00 AM.
+Which one would you like to update?
+------------------------------------------------------------
+[16:03:28] STATE CHANGE: speaking
+[16:03:40] STATE CHANGE: listening
+[16:03:43] TRANSCRIPT (USER): What was the patient's name?
+[16:03:43] STATE CHANGE: thinking
+[16:03:45] STATE CHANGE: speaking
+[16:03:49] STATE CHANGE: listening
+[16:03:50] TRANSCRIPT (USER): Okay.
+[16:03:50] STATE CHANGE: thinking
+[16:03:51] STATE CHANGE: speaking
+[16:03:54] STATE CHANGE: listening
+[16:04:01] TRANSCRIPT (USER): Okay. Thank you.
+[16:04:01] STATE CHANGE: thinking
+[16:04:02] STATE CHANGE: speaking
+[16:04:05] STATE CHANGE: listening
+[16:04:35] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[16:04:35] END TIME: 2026-01-19T16:04:35.383274

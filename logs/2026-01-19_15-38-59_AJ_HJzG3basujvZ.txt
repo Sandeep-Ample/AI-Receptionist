@@ -1,0 +1,42 @@
+
+==================== SESSION INITIALIZATION ====================
+[15:38:59] JOB ID: AJ_HJzG3basujvZ
+[15:38:59] AGENT TYPE: hospital
+[15:38:59] START TIME: 2026-01-19T15:38:59.443993
+------------------------------------------------------------
+[15:38:59] SYSTEM: Logger initialized and starting connection sequence
+[15:39:00] SYSTEM: Attaching event listeners to session
+[15:39:00] STATE CHANGE: listening
+[15:39:04] STATE CHANGE: speaking
+[15:39:07] STATE CHANGE: listening
+[15:39:12] TRANSCRIPT (USER): I'm having fever. Can you book an appointment for me?
+[15:39:12] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:39:14] TOOL CALL: Executing: search_specialty_by_symptom
+[15:39:14] TOOL ARGS: {'symptom': 'fever'}
+[15:39:14] TOOL RESULT: For 'fever', you should see a Pediatrics specialist. Shall I find a Pediatrics for you?
+------------------------------------------------------------
+[15:39:17] STATE CHANGE: speaking
+[15:39:25] STATE CHANGE: listening
+[15:39:30] TRANSCRIPT (USER): No. Show me the available appointment.
+[15:39:32] STATE CHANGE: thinking
+[15:39:32] TRANSCRIPT (USER): For
+[15:39:32] STATE CHANGE: listening
+[15:39:32] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:39:35] TOOL CALL: Executing: get_doctors_by_specialty
+[15:39:35] TOOL ARGS: {'specialty': 'Pediatrics'}
+[15:39:35] TOOL RESULT: We have the following Pediatrics specialists: Dr. E Kumar 4, Dr. H Kumar 7, Dr. K Kumar 10, Dr. P Kumar 15, Dr. S Kumar 18. Who would you like to see?
+------------------------------------------------------------
+[15:39:36] STATE CHANGE: speaking
+[15:39:41] STATE CHANGE: thinking
+[15:39:44] STATE CHANGE: speaking
+[15:39:50] STATE CHANGE: listening
+[15:39:52] TRANSCRIPT (USER): Okay. Thank you. You. You. Thank you. We'll disconnect the call.
+[15:39:52] STATE CHANGE: thinking
+[15:39:54] STATE CHANGE: speaking
+[15:39:56] STATE CHANGE: listening
+[15:40:15] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[15:40:15] END TIME: 2026-01-19T15:40:15.317248

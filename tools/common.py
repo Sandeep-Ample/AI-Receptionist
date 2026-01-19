@@ -61,7 +61,12 @@ async def update_user_info(
     Update the caller's persistent profile. 
     Call this as soon as the user reveals their name or an important preference.
     """
-    caller_id = ctx.participant.identity
+    # Get caller_id from the agent instance (BaseReceptionist stores it)
+    caller_id = getattr(ctx.agent, 'caller_identity', None)
+    if not caller_id:
+        logger.warning("Could not get caller identity from agent")
+        return "I couldn't save that information right now."
+    
     memory_service = get_memory_service()
     
     # Prepare metadata (this will be merged into the existing JSONB in Postgres)

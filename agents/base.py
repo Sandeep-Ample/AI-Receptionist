@@ -45,15 +45,17 @@ class BaseReceptionist(Agent):
     GREETING_TEMPLATE: str = "Hello, thank you for calling! How can I help you today?"
     RETURNING_GREETING_TEMPLATE: str = "Hi {name}, welcome back! How can I help you today?"
     
-    def __init__(self, memory_context: Optional[dict] = None):
+    def __init__(self, memory_context: Optional[dict] = None, caller_identity: Optional[str] = None):
         """
         Initialize the receptionist agent.
         
         Args:
             memory_context: Optional dict containing user memory from PostgreSQL.
                            Expected keys: 'name', 'last_summary', 'phone_number'
+            caller_identity: Unique identifier for the caller (e.g. mobile number or username)
         """
         self.memory_context = memory_context
+        self.caller_identity = caller_identity or "unknown_caller"
         
         # Build complete instructions with memory injection
         instructions = build_prompt(

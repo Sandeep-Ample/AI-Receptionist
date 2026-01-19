@@ -73,7 +73,7 @@ def list_agent_types() -> list[str]:
 def _load_agents():
     """Load all agent modules to trigger registration."""
     try:
-        from agents import hospital, hotel
+        from agents import hospital, hotel, salon
         logger.info(f"Loaded {len(_AGENT_REGISTRY)} agent types: {list_agent_types()}")
     except ImportError as e:
         logger.warning(f"Some agents failed to load: {e}")

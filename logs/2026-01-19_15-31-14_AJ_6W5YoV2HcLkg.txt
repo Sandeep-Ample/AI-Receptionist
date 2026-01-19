@@ -1,0 +1,95 @@
+
+==================== SESSION INITIALIZATION ====================
+[15:31:14] JOB ID: AJ_6W5YoV2HcLkg
+[15:31:14] AGENT TYPE: hospital
+[15:31:14] START TIME: 2026-01-19T15:31:14.102283
+------------------------------------------------------------
+[15:31:14] SYSTEM: Logger initialized and starting connection sequence
+[15:31:19] SYSTEM: Attaching event listeners to session
+[15:31:19] STATE CHANGE: listening
+[15:31:20] STATE CHANGE: speaking
+[15:31:24] STATE CHANGE: listening
+[15:31:27] TRANSCRIPT (USER): And I need to explain.
+[15:31:27] STATE CHANGE: thinking
+[15:31:29] STATE CHANGE: speaking
+[15:31:32] STATE CHANGE: listening
+[15:31:36] TRANSCRIPT (USER): I am having chased
+[15:31:36] STATE CHANGE: thinking
+[15:31:37] TRANSCRIPT (USER): pain.
+[15:31:37] STATE CHANGE: listening
+[15:31:37] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:31:38] TOOL CALL: Executing: search_specialty_by_symptom
+[15:31:38] TOOL ARGS: {'symptom': 'chest pain'}
+[15:31:38] TOOL RESULT: For 'chest pain', you should see a Cardiology specialist. Shall I find a Cardiology for you?
+------------------------------------------------------------
+[15:31:40] STATE CHANGE: speaking
+[15:31:46] STATE CHANGE: listening
+[15:31:51] TRANSCRIPT (USER): Yes, please.
+[15:31:51] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:31:52] TOOL CALL: Executing: get_doctors_by_specialty
+[15:31:52] TOOL ARGS: {'specialty': 'Cardiology'}
+[15:31:52] TOOL RESULT: We have the following Cardiology specialists: Dr. G Kumar 6, Dr. J Kumar 9, Dr. K Kumar 10, Dr. L Kumar 11, Dr. Y Kumar 24. Who would you like to see?
+------------------------------------------------------------
+[15:31:54] STATE CHANGE: speaking
+[15:32:05] STATE CHANGE: listening
+[15:32:08] TRANSCRIPT (USER): Yes. Book with the doctor.
+[15:32:09] STATE CHANGE: thinking
+[15:32:10] STATE CHANGE: speaking
+[15:32:16] STATE CHANGE: listening
+[15:32:19] TRANSCRIPT (USER): Doctor v Kumar.
+[15:32:20] STATE CHANGE: thinking
+[15:32:21] STATE CHANGE: listening
+[15:32:22] STATE CHANGE: speaking
+[15:32:34] TRANSCRIPT (USER): No.
+[15:32:34] STATE CHANGE: listening
+[15:32:34] STATE CHANGE: thinking
+[15:32:35] STATE CHANGE: listening
+[15:32:36] STATE CHANGE: speaking
+[15:32:36] STATE CHANGE: listening
+[15:32:36] TRANSCRIPT (USER): Doctor. Kumar.
+[15:32:36] STATE CHANGE: thinking
+[15:32:38] STATE CHANGE: speaking
+[15:32:49] STATE CHANGE: listening
+[15:32:52] TRANSCRIPT (USER): Doctor Y Kumar.
+[15:32:52] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:32:53] TOOL CALL: Executing: check_doctor_availability
+[15:32:53] TOOL ARGS: {'doctor_name': 'Dr. Y Kumar', 'date_str': '2026-01-19'}
+[15:32:53] TOOL RESULT: Dr. Dr. Y Kumar 24 has plenty of availability on Monday, starting at 09:00 AM. I also have 04:30 PM. What time works for you?
+------------------------------------------------------------
+[15:32:54] STATE CHANGE: speaking
+[15:33:00] STATE CHANGE: listening
+[15:33:01] TRANSCRIPT (USER): Doctor.
+[15:33:01] STATE CHANGE: thinking
+[15:33:02] STATE CHANGE: speaking
+[15:33:08] STATE CHANGE: listening
+[15:33:12] TRANSCRIPT (USER): Yes. At evening.
+[15:33:13] STATE CHANGE: thinking
+[15:33:13] TRANSCRIPT (USER): You can book.
+[15:33:13] STATE CHANGE: listening
+[15:33:14] STATE CHANGE: thinking
+[15:33:15] STATE CHANGE: speaking
+[15:33:23] STATE CHANGE: listening
+[15:33:27] TRANSCRIPT (USER): Full name is
+[15:33:28] TRANSCRIPT (USER): Sandeep Sharma.
+[15:33:32] TRANSCRIPT (USER): And date of birth is twenty five November nineteen eighty eight.
+[15:33:34] TRANSCRIPT (USER): And gender, male.
+[15:33:34] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:33:35] TOOL CALL: Executing: book_appointment
+[15:33:35] TOOL ARGS: {'doctor_name': 'Dr. Y Kumar', 'date_str': '2026-01-19', 'time_str': '16:30', 'patient_name': 'Sandeep Sharma', 'reason': 'chest pain', 'dob': '1988-11-25', 'gender': 'Male'}
+[15:33:35] TOOL RESULT: Confirmed. You are booked with Dr. Dr. Y Kumar 24 on Monday, January 19 at 04:30 PM. Please arrive by 04:15 PM.
+------------------------------------------------------------
+[15:33:37] STATE CHANGE: speaking
+[15:33:46] STATE CHANGE: listening
+[15:33:48] TRANSCRIPT (USER): Okay. Thank you.
+[15:33:48] STATE CHANGE: thinking
+[15:33:49] STATE CHANGE: speaking
+[15:33:52] STATE CHANGE: listening
+[15:33:55] TRANSCRIPT (USER): Confirm the call, please.
+[15:34:20] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[15:34:20] END TIME: 2026-01-19T15:34:20.353245

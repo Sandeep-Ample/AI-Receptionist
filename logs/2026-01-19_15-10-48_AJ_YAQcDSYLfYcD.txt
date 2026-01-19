@@ -1,0 +1,63 @@
+
+==================== SESSION INITIALIZATION ====================
+[15:10:48] JOB ID: AJ_YAQcDSYLfYcD
+[15:10:48] AGENT TYPE: hospital
+[15:10:48] START TIME: 2026-01-19T15:10:48.335694
+------------------------------------------------------------
+[15:10:48] SYSTEM: Logger initialized and starting connection sequence
+[15:10:49] SYSTEM: Attaching event listeners to session
+[15:10:49] STATE CHANGE: listening
+[15:10:49] STATE CHANGE: speaking
+[15:10:53] STATE CHANGE: listening
+[15:10:58] TRANSCRIPT (USER): I'm not feeling well. Can you book an appointment
+[15:10:58] TRANSCRIPT (USER): me?
+[15:11:01] STATE CHANGE: thinking
+[15:11:02] STATE CHANGE: speaking
+[15:11:08] STATE CHANGE: listening
+[15:11:13] TRANSCRIPT (USER): Yes. I'm having sore in my throat.
+[15:11:13] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:11:15] TOOL CALL: Executing: search_specialty_by_symptom
+[15:11:15] TOOL ARGS: {'symptom': 'sore throat'}
+[15:11:15] TOOL RESULT: I couldn't match that symptom to a specialist. A General Physician is usually a good start. Shall I find one?
+------------------------------------------------------------
+[15:11:15] STATE CHANGE: listening
+[15:11:16] STATE CHANGE: speaking
+[15:11:16] STATE CHANGE: listening
+[15:11:24] STATE CHANGE: speaking
+[15:11:30] STATE CHANGE: listening
+[15:11:33] TRANSCRIPT (USER): Yes, please. You can. If you can.
+[15:11:33] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:11:34] TOOL CALL: Executing: get_doctors_by_specialty
+[15:11:34] TOOL ARGS: {'specialty': 'General Physician'}
+[15:11:34] TOOL RESULT: I couldn't find any active doctors for General Physician at the moment.
+------------------------------------------------------------
+[15:11:36] STATE CHANGE: speaking
+[15:11:43] STATE CHANGE: listening
+[15:11:49] TRANSCRIPT (USER): No. Can you book an appointment for the requisition of
+[15:11:51] TRANSCRIPT (USER): twenty six January two thousand twenty six?
+[15:11:56] TRANSCRIPT (USER): If there is available, thanks a lot for me.
+[15:12:03] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:12:05] TOOL CALL: Executing: get_doctors_by_specialty
+[15:12:05] TOOL ARGS: {'specialty': 'General Physician'}
+[15:12:05] TOOL RESULT: I couldn't find any active doctors for General Physician at the moment.
+------------------------------------------------------------
+[15:12:06] STATE CHANGE: speaking
+[15:12:06] STATE CHANGE: listening
+[15:12:11] STATE CHANGE: speaking
+[15:12:16] STATE CHANGE: thinking
+[15:12:17] STATE CHANGE: speaking
+[15:12:25] STATE CHANGE: listening
+[15:12:29] TRANSCRIPT (USER): No. Thanks.
+[15:12:29] STATE CHANGE: thinking
+[15:12:30] STATE CHANGE: listening
+[15:12:31] TRANSCRIPT (USER): Disconnect the call.
+[15:12:31] STATE CHANGE: thinking
+[15:12:32] STATE CHANGE: listening
+[15:12:39] TRANSCRIPT (USER): General medicine.
+[15:13:13] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[15:13:13] END TIME: 2026-01-19T15:13:13.866855

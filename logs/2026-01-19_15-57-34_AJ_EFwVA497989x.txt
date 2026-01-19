@@ -1,0 +1,89 @@
+
+==================== SESSION INITIALIZATION ====================
+[15:57:34] JOB ID: AJ_EFwVA497989x
+[15:57:34] AGENT TYPE: hospital
+[15:57:34] START TIME: 2026-01-19T15:57:34.510043
+------------------------------------------------------------
+[15:57:34] SYSTEM: Logger initialized and starting connection sequence
+[15:57:35] SYSTEM: Attaching event listeners to session
+[15:57:35] STATE CHANGE: listening
+[15:57:38] STATE CHANGE: speaking
+[15:57:42] STATE CHANGE: listening
+[15:57:46] TRANSCRIPT (USER): And when you join team,
+[15:57:46] STATE CHANGE: thinking
+[15:57:47] STATE CHANGE: speaking
+[15:57:53] STATE CHANGE: listening
+[15:58:10] TRANSCRIPT (USER): Hello?
+[15:58:10] STATE CHANGE: thinking
+[15:58:12] STATE CHANGE: speaking
+[15:58:15] STATE CHANGE: listening
+[15:58:19] TRANSCRIPT (USER): I am having joint
+[15:58:20] TRANSCRIPT (USER): pain.
+[15:58:21] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:58:22] TOOL CALL: Executing: search_specialty_by_symptom
+[15:58:22] TOOL ARGS: {'symptom': 'joint pain'}
+[15:58:22] TOOL RESULT: For 'joint pain', you should see a Orthopedics specialist. Shall I find a Orthopedics for you?
+------------------------------------------------------------
+[15:58:24] STATE CHANGE: speaking
+[15:58:30] STATE CHANGE: listening
+[15:58:33] TRANSCRIPT (USER): Yeah. Please.
+[15:58:33] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:58:34] TOOL CALL: Executing: get_doctors_by_specialty
+[15:58:34] TOOL ARGS: {'specialty': 'Orthopedics'}
+[15:58:34] TOOL RESULT: We have the following Orthopedics specialists: Dr. D Kumar 3, Dr. E Kumar 4, Dr. F Kumar 5, Dr. G Kumar 6, Dr. I Kumar 8. Who would you like to see?
+------------------------------------------------------------
+[15:58:36] STATE CHANGE: speaking
+[15:58:41] STATE CHANGE: listening
+[15:58:46] STATE CHANGE: speaking
+[15:58:53] STATE CHANGE: listening
+[15:58:58] TRANSCRIPT (USER): Let me book an appointment with doctor Ay Kumar.
+[15:58:59] STATE CHANGE: thinking
+[15:59:01] STATE CHANGE: speaking
+[15:59:13] STATE CHANGE: listening
+[15:59:17] TRANSCRIPT (USER): Doctor I Kumar aide.
+[15:59:17] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:59:18] TOOL CALL: Executing: get_doctor_schedule
+[15:59:18] TOOL ARGS: {'doctor_name': 'Dr. I Kumar 8'}
+[15:59:18] TOOL RESULT: Dr. Dr. I Kumar 8 is available on Monday from 9:00 AM to 5:00 PM, Tuesday from 9:00 AM to 5:00 PM, Wednesday from 9:00 AM to 5:00 PM, Thursday from 9:00 AM to 5:00 PM, Friday from 9:00 AM to 5:00 PM, Saturday from 9:00 AM to 5:00 PM, and Sunday from 9:00 AM to 5:00 PM. Which day works for you?
+------------------------------------------------------------
+[15:59:19] STATE CHANGE: speaking
+[15:59:26] STATE CHANGE: listening
+[15:59:30] TRANSCRIPT (USER): Can you book an appointment in afternoon, two PM?
+[15:59:30] STATE CHANGE: thinking
+------------------------------------------------------------
+[15:59:31] TOOL CALL: Executing: check_doctor_availability
+[15:59:31] TOOL ARGS: {'doctor_name': 'Dr. I Kumar 8', 'date_str': '2026-01-19'}
+[15:59:31] TOOL RESULT: Dr. Dr. I Kumar 8 has plenty of availability on Monday, starting at 09:00 AM. I also have 04:00 PM. What time works for you?
+------------------------------------------------------------
+[15:59:33] STATE CHANGE: speaking
+[15:59:40] STATE CHANGE: listening
+[15:59:47] TRANSCRIPT (USER): Four PM.
+[15:59:47] STATE CHANGE: thinking
+[15:59:49] STATE CHANGE: listening
+[15:59:49] STATE CHANGE: speaking
+[15:59:49] STATE CHANGE: listening
+[15:59:50] TRANSCRIPT (USER): Today.
+[15:59:50] STATE CHANGE: thinking
+[15:59:52] STATE CHANGE: speaking
+[16:00:00] STATE CHANGE: listening
+[16:00:10] TRANSCRIPT (USER): Date of birth is twenty three November nineteen ninety one.
+[16:00:10] STATE CHANGE: thinking
+[16:00:12] STATE CHANGE: speaking
+[16:00:15] STATE CHANGE: listening
+[16:00:20] TRANSCRIPT (USER): And I told my full name is Pankaj Kumar.
+[16:00:20] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:00:22] TOOL CALL: Executing: book_appointment
+[16:00:22] TOOL ARGS: {'doctor_name': 'Dr. I Kumar 8', 'date_str': '2026-01-19', 'time_str': '16:00', 'patient_name': 'Pankaj Kumar', 'reason': 'joint pain', 'dob': '1991-11-23', 'gender': None}
+[16:00:22] TOOL RESULT: Confirmed. You are booked with Dr. Dr. I Kumar 8 on Monday, January 19 at 04:00 PM. Please arrive by 03:45 PM.
+------------------------------------------------------------
+[16:00:23] STATE CHANGE: speaking
+[16:00:31] STATE CHANGE: listening
+[16:00:34] TRANSCRIPT (USER): Thank you. Thank you. Disconnect the call.
+[16:00:55] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[16:00:55] END TIME: 2026-01-19T16:00:55.398974

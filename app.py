@@ -387,6 +387,29 @@ with col2:
                         await room.localParticipant.publishTrack(localAudioTrack);
                         console.log('Published local audio track');
                         
+                        // Debug: Check if microphone is actually capturing audio
+                        const mediaStream = localAudioTrack.mediaStream;
+                        if (mediaStream) {{
+                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const analyser = audioContext.createAnalyser();
+                            const source = audioContext.createMediaStreamSource(mediaStream);
+                            source.connect(analyser);
+                            analyser.fftSize = 256;
+                            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            
+                            // Check audio levels periodically
+                            setInterval(() => {{
+                                analyser.getByteFrequencyData(dataArray);
+                                const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                                if (avg > 5) {{
+                                    console.log('🎤 Mic audio level:', Math.round(avg));
+                                }}
+                            }}, 500);
+                            console.log('✅ Microphone stream active:', mediaStream.active);
+                        }} else {{
+                            console.error('❌ No media stream from audio track!');
+                        }}
+                        
                         updateStatus('connected', '● Connected - Start talking!');
                         connectBtn.style.display = 'none';
                         disconnectBtn.style.display = 'inline-block';

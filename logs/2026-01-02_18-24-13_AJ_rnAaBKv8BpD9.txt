@@ -1,9 +1,0 @@
-
-==================== SESSION INITIALIZATION ====================
-[18:24:13] JOB ID: AJ_rnAaBKv8BpD9
-[18:24:13] AGENT TYPE: hospital
-[18:24:13] START TIME: 2026-01-02T18:24:13.697566
-------------------------------------------------------------
-[18:24:13] SYSTEM: Logger initialized and starting connection sequence
-[18:24:13] SYSTEM: Attaching event listeners to session
-[18:24:13] STATE CHANGE: listening

@@ -56,6 +56,11 @@ class UniversalLogger:
         try:
             self.file.write(line)
             self.file.flush() # Ensure immediate write for debugging crashes
+            
+            # mirror to console for critical events
+            if category in ("VAD", "TRANSCRIPT (USER)", "TRANSCRIPT (AGENT)", "ERROR"):
+                logger.info(f"[{category}] {message}")
+                
         except Exception as e:
             logger.error(f"Write error: {e}")
 
@@ -84,24 +89,64 @@ class UniversalLogger:
                 pass
             self.file = None
 
-    def attach(self, session: AgentSession):
+
+
+    async def _publish_update(self, session: AgentSession, type_str: str, text: str, speaker: str):
+        """Send data to the frontend for UI rendering."""
+        try:
+            # Use stored room if available, otherwise try session.room (fallback)
+            room = getattr(self, "room", None)
+            if not room and hasattr(session, "room"):
+                room = session.room
+                
+            if not room:
+                return # Cannot publish without room
+                
+            import json
+            payload = json.dumps({
+                "type": type_str,
+                "text": text,
+                "speaker": speaker,
+                "timestamp": datetime.datetime.now().isoformat()
+            })
+            # Publish to the room so the frontend (Streamlit) receives it
+            await room.local_participant.publish_data(
+                payload.encode('utf-8'),
+                reliable=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to publish data update: {e}")
+
+    def attach(self, session: AgentSession, room=None):
         """
         automatically attach event listeners to the session.
         This captures transcripts and state changes without modifying main.py logic.
         """
         self.log("SYSTEM", "Attaching event listeners to session")
+        self.room = room
         
+        @session.on("user_speech_committed")
+        def on_user_speech(event):
+             # Log speech commit (VAD determined speech happened)
+             self.log("VAD", "User speech committed (processing...)")
+             pass
+
         @session.on("user_input_transcribed")
         def on_user_input(event):
             if event.is_final:
-                self.log("TRANSCRIPT (USER)", event.transcript)
+                text = event.transcript
+                self.log("TRANSCRIPT (USER)", text)
+                # Publish to UI
+                import asyncio
+                asyncio.create_task(self._publish_update(session, "transcription", text, "user"))
         
         @session.on("agent_speech_committed")
         def on_agent_speech(event):
-            # Capture what the agent decided to say
-            # Note: Event structure depends on SDK version, handling safely
             text = getattr(event, "text", str(event))
             self.log("TRANSCRIPT (AGENT)", text)
+            # Publish to UI
+            import asyncio
+            asyncio.create_task(self._publish_update(session, "transcription", text, "agent"))
             
         @session.on("agent_state_changed")
         def on_state_change(event):

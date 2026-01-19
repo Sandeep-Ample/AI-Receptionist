@@ -1,0 +1,143 @@
+
+==================== SESSION INITIALIZATION ====================
+[16:17:22] JOB ID: AJ_PP43v8Xen6ua
+[16:17:22] AGENT TYPE: salon
+[16:17:22] START TIME: 2026-01-19T16:17:22.044138
+------------------------------------------------------------
+[16:17:22] SYSTEM: Logger initialized and starting connection sequence
+[16:17:24] SYSTEM: Attaching event listeners to session
+[16:17:24] STATE CHANGE: listening
+[16:17:26] STATE CHANGE: speaking
+[16:17:29] STATE CHANGE: listening
+[16:17:34] TRANSCRIPT (USER): What are the available services?
+[16:17:34] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:17:35] TOOL CALL: Executing: search_services
+[16:17:35] TOOL ARGS: {'search_term': None}
+[16:17:35] TOOL RESULT: We have 7 services available. Some popular ones are Beard Trim, Facial, and Hair Coloring. What type of service are you looking for?
+------------------------------------------------------------
+[16:17:38] STATE CHANGE: speaking
+[16:17:47] STATE CHANGE: listening
+[16:17:50] TRANSCRIPT (USER): I want haircut.
+[16:17:50] STATE CHANGE: thinking
+[16:17:51] STATE CHANGE: listening
+------------------------------------------------------------
+[16:17:51] TOOL CALL: Executing: search_services
+[16:17:51] TOOL ARGS: {'search_term': 'haircut'}
+[16:17:51] TOOL RESULT: We offer Haircut for $500.00, which takes about 30 minutes. Would you like to book this?
+------------------------------------------------------------
+[16:17:51] STATE CHANGE: thinking
+[16:17:51] STATE CHANGE: listening
+[16:17:53] STATE CHANGE: speaking
+[16:17:59] STATE CHANGE: listening
+[16:18:05] TRANSCRIPT (USER): Yeah. Book a haircut start.
+[16:18:07] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:18:09] TOOL CALL: Executing: get_stylists_for_service
+[16:18:09] TOOL ARGS: {'service_name': 'Haircut'}
+[16:18:09] TOOL RESULT: For Haircut, we have Suresh Yadav, Raj Malhotra, Amit Kulkarni. Who would you prefer?
+------------------------------------------------------------
+[16:18:11] STATE CHANGE: speaking
+[16:18:18] STATE CHANGE: listening
+[16:18:25] TRANSCRIPT (USER): Let me just
+[16:18:25] TRANSCRIPT (USER): think about this.
+[16:18:26] STATE CHANGE: thinking
+[16:18:28] STATE CHANGE: speaking
+[16:18:33] STATE CHANGE: listening
+[16:19:58] TRANSCRIPT (USER): Hello?
+[16:19:58] TRANSCRIPT (USER): Hello?
+[16:20:12] TRANSCRIPT (USER): Hello?
+[16:20:13] STATE CHANGE: thinking
+[16:20:15] STATE CHANGE: speaking
+[16:20:21] STATE CHANGE: listening
+[16:20:27] TRANSCRIPT (USER): Who are the variables?
+[16:20:28] STATE CHANGE: thinking
+[16:20:28] STATE CHANGE: listening
+[16:20:29] STATE CHANGE: speaking
+[16:20:37] STATE CHANGE: listening
+[16:20:41] TRANSCRIPT (USER): Yeah. Choose any of them.
+[16:20:42] STATE CHANGE: thinking
+[16:20:44] STATE CHANGE: speaking
+[16:20:50] STATE CHANGE: listening
+[16:20:55] TRANSCRIPT (USER): What are the variables, date and time that I can choose right now?
+[16:20:56] STATE CHANGE: thinking
+[16:20:57] STATE CHANGE: listening
+[16:20:59] STATE CHANGE: speaking
+[16:20:59] STATE CHANGE: listening
+[16:21:02] STATE CHANGE: speaking
+[16:21:09] STATE CHANGE: listening
+[16:21:14] TRANSCRIPT (USER): Could you just make it for today evening?
+[16:21:17] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:21:19] TOOL CALL: Executing: check_stylist_availability
+[16:21:19] TOOL ARGS: {'stylist_name': 'Suresh Yadav', 'date_str': '2026-01-19', 'time_str': '18:00', 'duration_minutes': 30}
+[16:21:19] TOOL RESULT: Suresh Yadav is not scheduled to work on Monday, January 19. Would you like to try another date or stylist?
+------------------------------------------------------------
+------------------------------------------------------------
+[16:21:23] TOOL CALL: Executing: check_stylist_availability
+[16:21:23] TOOL ARGS: {'stylist_name': 'Raj Malhotra', 'date_str': '2026-01-19', 'time_str': '18:00', 'duration_minutes': 30}
+[16:21:23] TOOL RESULT: Raj Malhotra is not scheduled to work on Monday, January 19. Would you like to try another date or stylist?
+------------------------------------------------------------
+------------------------------------------------------------
+[16:21:23] TOOL CALL: Executing: check_stylist_availability
+[16:21:23] TOOL ARGS: {'stylist_name': 'Amit Kulkarni', 'date_str': '2026-01-19', 'time_str': '18:00', 'duration_minutes': 30}
+[16:21:23] TOOL RESULT: Amit Kulkarni is not scheduled to work on Monday, January 19. Would you like to try another date or stylist?
+------------------------------------------------------------
+[16:21:25] STATE CHANGE: speaking
+[16:21:31] STATE CHANGE: listening
+[16:21:35] TRANSCRIPT (USER): What about tomorrow morning?
+[16:21:35] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:21:43] TOOL CALL: Executing: check_stylist_availability
+[16:21:43] TOOL ARGS: {'stylist_name': 'Suresh Yadav', 'date_str': '2026-01-20', 'time_str': '10:00', 'duration_minutes': 30}
+[16:21:43] TOOL RESULT: Great news! Suresh Yadav is available on Tuesday, January 20 at 10:00 AM. Shall I book this for you?
+------------------------------------------------------------
+------------------------------------------------------------
+[16:21:43] TOOL CALL: Executing: check_stylist_availability
+[16:21:43] TOOL ARGS: {'stylist_name': 'Amit Kulkarni', 'date_str': '2026-01-20', 'time_str': '10:00', 'duration_minutes': 30}
+[16:21:43] TOOL RESULT: Amit Kulkarni is not scheduled to work on Tuesday, January 20. Would you like to try another date or stylist?
+------------------------------------------------------------
+------------------------------------------------------------
+[16:21:43] TOOL CALL: Executing: check_stylist_availability
+[16:21:43] TOOL ARGS: {'stylist_name': 'Raj Malhotra', 'date_str': '2026-01-20', 'time_str': '10:00', 'duration_minutes': 30}
+[16:21:43] TOOL RESULT: Sorry, Raj Malhotra is already booked at 10:00 AM. Would you like to try a different time?
+------------------------------------------------------------
+[16:21:45] STATE CHANGE: speaking
+[16:21:50] STATE CHANGE: listening
+[16:21:53] TRANSCRIPT (USER): Yes, please.
+[16:22:01] STATE CHANGE: thinking
+[16:22:02] STATE CHANGE: speaking
+[16:22:07] STATE CHANGE: listening
+[16:22:12] TRANSCRIPT (USER): My name is Sandeep.
+[16:22:13] TRANSCRIPT (USER): And my mobile number is
+[16:22:18] TRANSCRIPT (USER): nine zero zero one four seven six
+[16:22:19] TRANSCRIPT (USER): five five seven.
+[16:22:19] STATE CHANGE: thinking
+[16:22:23] STATE CHANGE: speaking
+[16:22:30] STATE CHANGE: listening
+[16:22:35] TRANSCRIPT (USER): Could you just repeat what you just sent?
+[16:22:43] STATE CHANGE: thinking
+[16:22:45] STATE CHANGE: speaking
+[16:22:51] STATE CHANGE: listening
+[16:22:55] TRANSCRIPT (USER): What
+[16:22:56] TRANSCRIPT (USER): number you heard
+[16:22:56] STATE CHANGE: thinking
+[16:22:58] STATE CHANGE: speaking
+[16:23:06] STATE CHANGE: listening
+[16:23:08] TRANSCRIPT (USER): It is.
+[16:23:09] STATE CHANGE: thinking
+------------------------------------------------------------
+[16:23:13] TOOL CALL: Executing: book_appointment
+[16:23:13] TOOL ARGS: {'stylist_name': 'Suresh Yadav', 'service_name': 'Haircut', 'date_str': '2026-01-20', 'time_str': '10:00', 'customer_name': 'Sandeep', 'customer_phone': '9001476557', 'notes': None}
+[16:23:13] TOOL RESULT: Your appointment is confirmed! You're booked with Suresh Yadav for Haircut on Tuesday, January 20 at 10:00 AM. Please arrive by 09:50 AM. See you then!
+------------------------------------------------------------
+[16:23:15] STATE CHANGE: speaking
+[16:23:22] STATE CHANGE: listening
+[16:23:25] TRANSCRIPT (USER): Okay. Thank you. Cut the call.
+[16:23:25] STATE CHANGE: thinking
+[16:23:27] STATE CHANGE: speaking
+[16:23:29] STATE CHANGE: listening
+[16:23:53] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[16:23:53] END TIME: 2026-01-19T16:23:53.843335

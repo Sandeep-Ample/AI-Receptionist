@@ -66,7 +66,7 @@ logger = logging.getLogger("receptionist-framework")
 def prewarm(proc: JobProcess):
     """Prewarm function to load models before the agent starts."""
     logger.info("Prewarming: Loading Silero VAD model...")
-    proc.userdata["vad"] = silero.VAD.load(min_speech_duration=0.3, activation_threshold=0.6)
+    proc.userdata["vad"] = silero.VAD.load(min_speech_duration=0.2, activation_threshold=0.4)
     logger.info(f"Prewarming complete. Available agents: {list_agent_types()}")
 
 
@@ -88,12 +88,17 @@ async def _generate_summary(session: AgentSession) -> Optional[str]:
         if len(messages) < 2:
             return None
         
-        # Create a simple transcript
+        # Create a simple transcript - filter out FunctionCall objects
         transcript_parts = []
         for msg in messages:
+            # Skip items that don't have a role attribute (e.g., FunctionCall)
+            if not hasattr(msg, 'role') or not hasattr(msg, 'content'):
+                continue
             if msg.role in ("user", "assistant") and msg.content:
                 role = "Caller" if msg.role == "user" else "Agent"
-                transcript_parts.append(f"{role}: {msg.content}")
+                # Handle content that might be a list
+                content = msg.content if isinstance(msg.content, str) else str(msg.content)
+                transcript_parts.append(f"{role}: {content}")
         
         if not transcript_parts:
             return None
@@ -153,7 +158,14 @@ async def _save_summary_async(session: AgentSession, caller_id: str, caller_name
         logger.info("CONVERSATION HISTORY")
         if session.current_agent and session.current_agent.chat_ctx:
             for msg in session.current_agent.chat_ctx.items:
-                logger.info(f"[{msg.role.upper()}]: {msg.content}")
+                # Skip items that don't have a role attribute (e.g., FunctionCall)
+                if not hasattr(msg, 'role'):
+                    continue
+                content = msg.content if hasattr(msg, 'content') else "[no content]"
+                # Handle content that might be a list
+                if isinstance(content, list):
+                    content = ' '.join(str(c) for c in content)
+                logger.info(f"[{msg.role.upper()}]: {content}")
         logger.info("=" * 40)
 
     except Exception as e:
@@ -201,15 +213,15 @@ async def entrypoint(ctx: JobContext):
     
     # 5. Instantiate the correct agent with memory context
     AgentClass = get_agent_class(agent_type)
-    agent = AgentClass(memory_context=memory)
-    logger.info(f"Instantiated agent: {AgentClass.__name__}")
+    agent = AgentClass(memory_context=memory, caller_identity=caller_id)
+    logger.info(f"Instantiated agent: {AgentClass.__name__} for caller: {caller_id}")
     
     # 6. Create session with optimized settings
     session = AgentSession(
         vad=ctx.proc.userdata["vad"],
-        stt=deepgram.STT(model="nova-2"),
-        llm=openai.LLM(model="gpt-4o-mini"),
-        tts=openai.TTS(model="tts-1", voice="nova"),
+        stt=deepgram.STT(),
+        llm=openai.LLM(),
+        tts=cartesia.TTS(),
         allow_interruptions=True,
     )
     
@@ -218,7 +230,7 @@ async def entrypoint(ctx: JobContext):
     
     try:
         # 7. Set up event handlers
-        session_logger.attach(session)
+        session_logger.attach(session, room=ctx.room)
         # Attach logger to session for tools to access
         session.universal_logger = session_logger
         
@@ -267,12 +279,22 @@ async def entrypoint(ctx: JobContext):
         session_logger.log("SYSTEM", "Session cleanup initiated")
         session_logger.close()
         
-        # 10. Async summarization - fire and forget
-        # This allows the agent to disconnect immediately
-        logger.info("Session ending - starting async summarization...")
-        asyncio.create_task(
-            _save_summary_async(session, caller_id, caller_name)
-        )
+        # 10. Explicitly disconnect to ensure immediate room departure
+        # This fixes issues where the agent lingers in the room (15s timeout)
+        try:
+            if ctx.room.connection_state == rtc.ConnectionState.CONN_CONNECTED:
+                 logger.info("Explicitly disconnecting from room...")
+                 await ctx.room.disconnect()
+        except Exception as e:
+            logger.error(f"Error during explicit disconnect: {e}")
+
+        # 11. Run summarization *after* disconnect
+        # We await it here to ensure the process stays alive until it's done.
+        logger.info("Session ending - running summary generation...")
+        try:
+            await _save_summary_async(session, caller_id, caller_name)
+        except Exception as e:
+            logger.error(f"Failed to generate summary: {e}")
         
         # Print conversation for debugging
         
