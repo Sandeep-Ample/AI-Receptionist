@@ -45,28 +45,41 @@ st.markdown("""
     .stApp { background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%); }
     h1, h2, h3 { color: #00d4ff !important; }
     .status-box {
-        background: rgba(0, 212, 255, 0.1);
-        border: 1px solid rgba(0, 212, 255, 0.3);
-        border-radius: 15px;
-        padding: 20px;
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
         text-align: center;
-        margin: 20px 0;
+        margin: 20px auto;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
+        max-width: 500px;
     }
     .agent-avatar {
-        width: 120px;
-        height: 120px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #00d4ff, #0099cc);
+        background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, rgba(0,0,0,0) 70%);
         margin: 0 auto 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 50px;
+        font-size: 80px;
+        position: relative;
+    }
+    .agent-avatar::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 212, 255, 0.3);
         animation: pulse 2s infinite;
     }
     @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
-        50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.8); }
+        0% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+        70% { transform: scale(1.1); opacity: 0; box-shadow: 0 0 20px 20px rgba(0, 212, 255, 0); }
+        100% { transform: scale(1); opacity: 0; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -99,8 +112,8 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
     <div class="status-box">
-        <div class="agent-avatar">🤖</div>
-        <h3>Office Receptionist</h3>
+        <div class="agent-avatar"></div>
+        <h3></h3>
         <p style="color: #888;">Ready to assist you</p>
     </div>
     """, unsafe_allow_html=True)
@@ -159,76 +172,26 @@ with col2:
                     margin: 15px 0;
                     font-weight: bold;
                     font-size: 16px;
+                    transition: all 0.3s ease;
                 }}
-                .status.disconnected {{ background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }}
-                .status.connecting {{ background: rgba(255, 193, 7, 0.2); color: #ffc107; }}
-                .status.connected {{ background: rgba(0, 255, 136, 0.2); color: #00ff88; }}
+                .status.disconnected {{ background: rgba(255, 107, 107, 0.1); color: #ff6b6b; border: 1px solid rgba(255, 107, 107, 0.2); }}
+                .status.connecting {{ background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2); }}
+                .status.connected {{ background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.2); }}
                 .visualizer {{
-                    width: 200px;
-                    height: 60px;
+                    width: 100%;
+                    height: 80px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 4px;
-                    margin: 20px 0;
+                    gap: 6px;
+                    margin: 30px 0;
                 }}
                 .bar {{
-                    width: 6px;
+                    width: 8px;
                     background: linear-gradient(180deg, #00d4ff, #0099cc);
-                    border-radius: 3px;
+                    border-radius: 4px;
                     transition: height 0.1s ease;
-                }}
-                .transcript {{
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 15px;
-                    padding: 20px;
-                    margin-top: 20px;
-                    width: 100%;
-                    max-width: 600px;
-                    min-height: 250px;
-                    max-height: 350px;
-                    overflow-y: auto;
-                    font-size: 15px;
-                }}
-                .transcript-title {{
-                    color: #00d4ff;
-                    font-size: 14px;
-                    margin-bottom: 15px;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }}
-                .message {{
-                    margin: 12px 0;
-                    padding: 12px 16px;
-                    border-radius: 12px;
-                    animation: fadeIn 0.3s ease;
-                }}
-                @keyframes fadeIn {{
-                    from {{ opacity: 0; transform: translateY(10px); }}
-                    to {{ opacity: 1; transform: translateY(0); }}
-                }}
-                .message.user {{ 
-                    background: rgba(0, 212, 255, 0.15); 
-                    border-left: 3px solid #00d4ff;
-                    margin-left: 20px;
-                }}
-                .message.agent {{ 
-                    background: rgba(0, 255, 136, 0.15); 
-                    border-left: 3px solid #00ff88;
-                    margin-right: 20px;
-                }}
-                .message-label {{
-                    font-size: 11px;
-                    opacity: 0.7;
-                    margin-bottom: 4px;
-                    text-transform: uppercase;
-                }}
-                .empty-state {{
-                    color: #666;
-                    text-align: center;
-                    padding: 40px;
-                    font-style: italic;
+                    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
                 }}
                 audio {{ display: none; }}
             </style>
@@ -252,12 +215,6 @@ with col2:
                 <button id="disconnectBtn" class="btn btn-disconnect" onclick="disconnect()" style="display: none;">🔌 Disconnect</button>
             </div>
             
-            <div id="transcript" class="transcript">
-                <div class="transcript-title">💬 Conversation</div>
-                <div id="messages">
-                    <div class="empty-state">Start talking after connecting...</div>
-                </div>
-            </div>
             
             <audio id="audioElement" autoplay></audio>
             
@@ -271,7 +228,6 @@ with col2:
                 const statusEl = document.getElementById('status');
                 const connectBtn = document.getElementById('connectBtn');
                 const disconnectBtn = document.getElementById('disconnectBtn');
-                const messagesEl = document.getElementById('messages');
                 const bars = document.querySelectorAll('.bar');
                 
                 function updateStatus(status, text) {{
@@ -279,35 +235,11 @@ with col2:
                     statusEl.textContent = text;
                 }}
                 
-                function addMessage(text, type) {{
-                    // Remove empty state
-                    const emptyState = messagesEl.querySelector('.empty-state');
-                    if (emptyState) emptyState.remove();
-                    
-                    const div = document.createElement('div');
-                    div.className = 'message ' + type;
-                    
-                    const label = document.createElement('div');
-                    label.className = 'message-label';
-                    label.textContent = type === 'user' ? '🗣️ You' : '🤖 Agent';
-                    
-                    const content = document.createElement('div');
-                    content.textContent = text;
-                    
-                    div.appendChild(label);
-                    div.appendChild(content);
-                    messagesEl.appendChild(div);
-                    
-                    // Auto scroll
-                    const transcript = document.getElementById('transcript');
-                    transcript.scrollTop = transcript.scrollHeight;
-                }}
-                
                 function animateBars(active) {{
                     if (active && !animationId) {{
                         function animate() {{
                             bars.forEach(bar => {{
-                                const height = Math.random() * 40 + 10;
+                                const height = Math.random() * 60 + 10;
                                 bar.style.height = height + 'px';
                             }});
                             animationId = requestAnimationFrame(animate);
@@ -349,12 +281,10 @@ with col2:
                         
                         // Handle data messages (transcriptions)
                         room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant, kind, topic) => {{
+                            // Transcript handling removed for UI update
                             try {{
                                 const data = JSON.parse(new TextDecoder().decode(payload));
                                 console.log('Data received:', data);
-                                if (data.type === 'transcription' && data.text) {{
-                                    addMessage(data.text, data.speaker === 'agent' ? 'agent' : 'user');
-                                }}
                             }} catch (e) {{
                                 console.error('Error parsing data:', e);
                             }}
@@ -370,9 +300,6 @@ with col2:
                         
                         room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {{
                             console.log('Participant connected:', participant.identity);
-                            if (participant.identity.startsWith('agent')) {{
-                                addMessage('Agent has joined the room', 'agent');
-                            }}
                         }});
                         
                         await room.connect(wsUrl, token);
@@ -448,5 +375,5 @@ st.markdown("""
 ### 📋 Quick Start
 1. Ensure Docker & agent are running
 2. Click **Connect** and allow microphone
-3. Start talking - see live transcripts!
+3. Start talking to the AI receptionist!
 """)

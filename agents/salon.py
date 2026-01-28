@@ -41,14 +41,15 @@ CRITICAL CONSTRAINTS:
 1. NO HALLUCINATIONS: You have ZERO knowledge of services, stylists, or availability outside of tools.
    - If user asks about services, call `search_services`.
    - If user asks about stylists for a service, call `get_stylists_for_service`.
-   - To check availability, use `check_stylist_availability`.
+   - To check availability, use `find_availability`.
+   - If user asks for bio or experience, call `get_stylist_profile`.
    - Never guess a stylist's name or available times.
 
 2. BOOKING WORKFLOW:
    Step 1: Service Selection - Ask which service they want, use `search_services` to confirm it exists.
    Step 2: Stylist Selection - Use `get_stylists_for_service` to find who can perform it. Ask user to choose.
-   Step 3: Date & Time - Ask when they'd like to come. Parse natural language dates like "tomorrow" or "next Monday".
-   Step 4: Availability Check - Call `check_stylist_availability` to verify the slot is open.
+   Step 3: Date & Time - Ask when they'd like to come.
+   Step 4: Availability Check - Call `find_availability` to verify slots or find options.
    Step 5: Customer Details - Ask for their name and phone number (10 digits).
    Step 6: Confirmation - Summarize the booking and ask for confirmation.
    Step 7: Book - Call `book_appointment` only after explicit "yes" confirmation.
@@ -61,7 +62,8 @@ CRITICAL CONSTRAINTS:
    - Get new date/time → Check availability → Call `reschedule_booking`.
 
 5. GENERAL RULES:
-   - Phone numbers must be exactly 10 digits.
+   - **Validation**: Do not accept inconsistent or invalid inputs (e.g., future DOBs if applicable, invalid phone numbers).
+   - Phone numbers must be exactly 10 digits. Reject anything less.
    - Always confirm before making any booking or cancellation.
    - Be warm, friendly, and professional.
    - Keep responses concise for voice - avoid long lists.
@@ -130,42 +132,115 @@ CRITICAL CONSTRAINTS:
     async def get_stylists_for_service(
         self,
         ctx: RunContext,
-        service_name: Annotated[str, "The service name to find stylists for"]
+        service_names: Annotated[str, "One or more service names (e.g. 'haircut', 'haircut and facial')"]
     ) -> str:
         """
-        Find stylists who can perform a specific service.
+        Find stylists who can perform the specified service(s).
+        Handles queries like "haircut and color".
         """
-        logger.info(f"Finding stylists for service: {service_name}")
+        logger.info(f"Finding stylists for: {service_names}")
         
-        stylists = await self.db.get_stylists_for_service(service_name)
+        # Split by 'and', ',', 'plus' to handle multiple services
+        # Simple splitting logic
+        clean_names = service_names.replace(" and ", ",").replace(" plus ", ",").split(",")
+        services = [s.strip() for s in clean_names if s.strip()]
         
-        if not stylists:
-            return f"I couldn't find any stylists who offer {service_name}. Would you like to try a different service?"
-        
-        # Deduplicate stylist names
-        unique_stylists = list(set(s['stylist_name'] for s in stylists))
-        
-        if len(unique_stylists) == 1:
-            return f"For {service_name}, we have {unique_stylists[0]} available. Would you like to book with them?"
+        if len(services) == 1:
+            stylists = await self.db.get_stylists_for_service(services[0])
+            if not stylists:
+                return f"I couldn't find any stylists who offer {services[0]}. Would you like to try a different service?"
+            
+            unique_stylists = list(set(s['stylist_name'] for s in stylists))
+            if len(unique_stylists) == 1:
+                return f"For {services[0]}, we have {unique_stylists[0]} available. Would you like to book with them?"
+            else:
+                return f"For {services[0]}, we have {', '.join(unique_stylists)}. Who would you prefer?"
+                
         else:
-            return f"For {service_name}, we have {', '.join(unique_stylists)}. Who would you prefer?"
+            # Multi-service check
+            stylists = await self.db.get_stylists_for_multiple_services(services)
+            if not stylists:
+                return f"I couldn't find a single stylist who can do all of those services ({', '.join(services)}). We might need to book separate appointments or different stylists."
+            
+            names = [s['stylist_name'] for s in stylists]
+            if len(names) == 1:
+                 return f"Only {names[0]} can perform both {', '.join(services)}. Shall we check their availability?"
+            return f"The following stylists can do both: {', '.join(names)}. Who would you prefer?"
+
+    # --- 2b. Stylist Profile ---
+
+    @function_tool()
+    @log_tool_call
+    async def get_stylist_profile(
+        self,
+        ctx: RunContext,
+        stylist_name: Annotated[str, "Name of the stylist"]
+    ) -> str:
+        """
+        Get details about a stylist's experience, bio, and specialization.
+        """
+        logger.info(f"Fetching profile for: {stylist_name}")
+        stylist = await self.db.get_stylist_details(stylist_name)
+        
+        if not stylist:
+            return f"I couldn't find a stylist named {stylist_name}."
+            
+        bio = stylist.get('bio') or "an experienced stylist"
+        exp = stylist.get('experience_years', 0)
+        spec = stylist.get('specialization') or "general beauty services"
+        
+        return f"{stylist['name']} has {exp} years of experience and specializes in {spec}. They are {bio}. Would you like to check their availability?"
+
+    # --- 2c. Salon Info ---
+
+    @function_tool()
+    @log_tool_call
+    async def get_salon_info(
+        self,
+        ctx: RunContext,
+        info_type: Annotated[str, "What info is needed: 'hours', 'location', 'contact', 'email'"]
+    ) -> str:
+        """
+        Get general information about the salon.
+        """
+        logger.info(f"Fetching salon info: {info_type}")
+        
+        if "hour" in info_type or "time" in info_type:
+             # Basic hours logic (could be improved with DB lookup for today)
+             today = datetime.now().strftime("%A")
+             hours = await self.db.get_salon_hours(today)
+             if hours and not hours['is_closed']:
+                 return f"Today ({today}) we are open from {hours['open_time'].strftime('%I:%M %p')} to {hours['close_time'].strftime('%I:%M %p')}."
+             return "We are open Mon-Sat 9am-7pm."
+             
+        if "location" in info_type or "address" in info_type:
+            return "We are located at 123 Beauty Lane, Downtown."
+            
+        if "contact" in info_type or "phone" in info_type:
+            return "You can reach us at (555) 123-4567."
+            
+        if "email" in info_type:
+            return "Our email is contact@luxesalon.com."
+            
+        return "I can provide our hours, location, and contact details."
 
     # --- 3. Availability Check ---
 
     @function_tool()
     @log_tool_call
-    async def check_stylist_availability(
+    async def find_availability(
         self,
         ctx: RunContext,
-        stylist_name: Annotated[str, "Name of the stylist"],
-        date_str: Annotated[str, "Desired date (e.g. 'tomorrow', 'next Monday', 'January 25')"],
-        time_str: Annotated[str, "Desired time (e.g. '2 PM', '14:00')"],
+        date_str: Annotated[str, "Desired date (e.g. 'tomorrow', 'next Monday')"],
+        time_query: Annotated[str, "Desired time or period (e.g. '2 PM', 'morning', 'afternoon', 'any time')"],
+        stylist_name: Annotated[Optional[str], "Name of the stylist (optional)"] = None,
         duration_minutes: Annotated[int, "Duration of the service in minutes"] = 30
     ) -> str:
         """
-        Check if a stylist is available at a specific date and time.
+        Check availability for a specific stylist or any stylist.
+        Handles time ranges like "morning" or specific times.
         """
-        logger.info(f"Checking availability: {stylist_name} on {date_str} at {time_str}")
+        logger.info(f"Checking availability: {stylist_name or 'ANY'} on {date_str} for '{time_query}'")
         ctx.disallow_interruptions()
         
         # 1. Parse date
@@ -175,62 +250,82 @@ CRITICAL CONSTRAINTS:
                 return "I cannot check availability in the past. Please choose a future date."
             booking_date = parsed_date.date()
         except:
-            return "I didn't catch the date. Could you say 'tomorrow', 'next Monday', or a specific date like 'January 25th'?"
+            return "I didn't catch the date. Could you say 'tomorrow', 'next Monday', or a specific date?"
+            
+        # 2. Parse time/period
+        start_range = time(9, 0)
+        end_range = time(19, 0) # Default salon hours roughly
         
-        # 2. Parse time
-        try:
-            parsed_time = parser.parse(time_str, default=datetime.now()).time()
-        except:
-            return "I couldn't understand the time. Could you say it like '2 PM' or '14:00'?"
+        t_lower = time_query.lower()
+        if "morning" in t_lower:
+            start_range = time(9, 0)
+            end_range = time(12, 0)
+        elif "afternoon" in t_lower:
+            start_range = time(12, 0)
+            end_range = time(17, 0)
+        elif "evening" in t_lower:
+            start_range = time(17, 0)
+            end_range = time(20, 0)
+        elif "any" in t_lower:
+            pass # Use full day
+        else:
+            # Try specific time
+            try:
+                target_time = parser.parse(time_query, default=datetime.now()).time()
+                # Create a small window around the target time (+/- 60 mins is usually too broad for exact request, let's say +/- 0, but if failing, we can suggset)
+                # Actually, let's treat specific time as a range of +/- 30 mins to allow flexibility
+                # Or simply exact match check first.
+                # Let's set the range to strict for now, or small window.
+                # If user says "2 PM", they might accept 2:30.
+                dt_target = datetime.combine(booking_date, target_time)
+                dt_start = dt_target - timedelta(minutes=60)
+                dt_end = dt_target + timedelta(minutes=60)
+                start_range = dt_start.time()
+                end_range = dt_end.time()
+            except:
+                if "morning" not in t_lower and "afternoon" not in t_lower:
+                    return "I didn't guess the time. Could you say 'morning', 'afternoon', or a specific time like '2 PM'?"
+
+        # 3. Resolve Stylist ID
+        stylist_id = None
+        s_name = "any stylist"
+        if stylist_name:
+            stylist = await self.db.get_stylist_details(stylist_name)
+            if not stylist:
+                return f"I couldn't find a stylist named {stylist_name}."
+            stylist_id = stylist['stylist_id']
+            s_name = stylist['name']
+            
+        # 4. Search slots
+        slots = await self.db.get_slots_in_range(
+            booking_date, start_range, end_range, duration_minutes, stylist_id
+        )
         
-        # 3. Get stylist
-        stylist = await self.db.get_stylist_details(stylist_name)
-        if not stylist:
-            return f"I couldn't find a stylist named {stylist_name}."
+        if not slots:
+            # Try to offer alternatives if specific time failed
+            return f"I couldn't find any openings for {s_name} on {booking_date.strftime('%A')} around {time_query}. Would you like to check a different time or different stylist?"
+            
+        # 5. Format response
+        # Group by stylist
+        options = []
+        count = 0
         
-        stylist_id = stylist['stylist_id']
-        day_name = booking_date.strftime("%A").lower()
-        
-        # 4. Check salon hours
-        salon_hours = await self.db.get_salon_hours(day_name)
-        if not salon_hours:
-            return f"Sorry, the salon is closed on {day_name.title()}s."
-        
-        if salon_hours.get('is_closed'):
-            return f"Sorry, the salon is closed on {day_name.title()}s."
-        
-        open_time = salon_hours['open_time']
-        close_time = salon_hours['close_time']
-        
-        if not (open_time <= parsed_time < close_time):
-            return f"The salon is open from {open_time.strftime('%I:%M %p')} to {close_time.strftime('%I:%M %p')}. Please choose a time within these hours."
-        
-        # 5. Check stylist availability for the date
-        stylist_shift = await self.db.get_stylist_availability(stylist_id, booking_date)
-        if not stylist_shift:
-            return f"{stylist['name']} is not scheduled to work on {booking_date.strftime('%A, %B %d')}. Would you like to try another date or stylist?"
-        
-        shift_start = stylist_shift['start_time']
-        shift_end = stylist_shift['end_time']
-        
-        if not (shift_start <= parsed_time):
-            return f"{stylist['name']} starts at {shift_start.strftime('%I:%M %p')} on that day. Would you like that time instead?"
-        
-        # Calculate end time
-        end_dt = datetime.combine(booking_date, parsed_time) + timedelta(minutes=duration_minutes)
-        end_time = end_dt.time()
-        
-        if end_time > shift_end:
-            return f"{stylist['name']}'s shift ends at {shift_end.strftime('%I:%M %p')}. The appointment wouldn't fit. Please choose an earlier time."
-        
-        # 6. Check for conflicting bookings
-        is_available = await self.db.check_slot_available(stylist_id, booking_date, parsed_time, end_time)
-        
-        if not is_available:
-            return f"Sorry, {stylist['name']} is already booked at {parsed_time.strftime('%I:%M %p')}. Would you like to try a different time?"
-        
-        # Slot is available!
-        return f"Great news! {stylist['name']} is available on {booking_date.strftime('%A, %B %d')} at {parsed_time.strftime('%I:%M %p')}. Shall I book this for you?"
+        # If specific stylist
+        if stylist_id:
+            times = [s['start_time'].strftime("%I:%M %p") for s in slots[:3]] # limit to 3
+            return f"{s_name} is available at {', '.join(times)}. Which works for you?"
+            
+        # If any stylist
+        else:
+            # Pick a few distinct options
+            seen_times = set()
+            for s in slots:
+                if s['start_time'] not in seen_times and count < 3:
+                     options.append(f"{s['start_time'].strftime('%I:%M %p')} with {s['stylist_name']}")
+                     seen_times.add(s['start_time'])
+                     count += 1
+            
+            return f"I found some availability: {'; '.join(options)}. Do any of these work?"
 
     # --- 4. Booking ---
 

@@ -8,6 +8,7 @@ Handles:
 """
 
 import logging
+import asyncio
 from typing import Annotated, Optional
 from datetime import datetime, timedelta, time
 
@@ -38,11 +39,13 @@ class HospitalAgent(BaseReceptionist):
 TODAY'S DATE: {current_date} ({current_day})
 
 CRITICAL CONSTRAINTS:
+Always ask some follow-ups about the problem it will be not added is database but just simple QnA about the symptoms.
 1. NO HALLUCINATIONS: You have ZERO knowledge of doctors or schedules outside of tools.
    - If a user mentions a symptom, you MUST call `search_specialty_by_symptom`.
    - If user asks "when is Dr. X available?" (general), call `get_doctor_schedule`.
    - To book a specific date, use `check_doctor_availability` with the date.
    - Never guess a doctor's name or a time slot.
+   when tool give doctor name as Dr. X then you have to say Doctor X not Dr X.
 
 2. WORKFLOWS:
    - **Symptom Check**: "I have a fever" -> Call `search_specialty_by_symptom`.
@@ -53,7 +56,13 @@ CRITICAL CONSTRAINTS:
 3. INPUTS:
    - For `book_appointment`, you need: Doctor Name, Date, Time, Patient Name, DOB (approximated if strictly needed, but ask), and Reason.
    - Gender should be: Male, Female, or Other.
-   - The user's mobile number is available in context, but confirm it if critical.
+   - The user's mobile number is available in context.
+   - **Validation Rules**:
+     - Always make confirmation about details from user if yes then only Book, Cancel and Reschedule. If No Ask which details wants to change
+     - Mobile numbers must be at least 10 digits.
+     - Date of Birth (DOB) cannot be in the future.
+
+     after booking say a confirmation message will share to you shortly on your registered mobile number.
 """
 
     @property
@@ -167,10 +176,13 @@ CRITICAL CONSTRAINTS:
         self,
         ctx: RunContext,
         doctor_name: Annotated[str, "Name of the doctor"],
-        date_str: Annotated[str, "Desired date (e.g. 'tomorrow', 'next Monday')"]
+        date_str: Annotated[str, "Desired date (e.g. 'tomorrow', 'next Monday')"],
+        before_time: Annotated[Optional[str], "Filter: only show slots before this time (e.g. '12:00 PM')"] = None,
+        after_time: Annotated[Optional[str], "Filter: only show slots after this time (e.g. '2:00 PM')"] = None
     ) -> str:
         """
         Check available time slots for a doctor on a specific date.
+        Supports time filtering (e.g. 'morning' -> before_time='12:00 PM').
         """
         logger.info(f"Checking availability for {doctor_name} on {date_str}")
         ctx.disallow_interruptions()
@@ -192,16 +204,18 @@ CRITICAL CONSTRAINTS:
         doc_id = doc['doc_id']
         day_name = query_date.strftime("%A") # e.g. "Monday"
         
-        # 2. Get Shift
-        shift = await self.db.get_doctor_shift(doc_id, day_name)
+        # 2. & 3. Get Shift and Bookings in Parallel
+        # These are independent once we have doc_id and query_date
+        shift_task = self.db.get_doctor_shift(doc_id, day_name)
+        bookings_task = self.db.get_doctor_bookings(doc_id, query_date)
+        
+        shift, bookings = await asyncio.gather(shift_task, bookings_task)
+        
         if not shift:
              return f"Dr. {doc['name']} does not have office hours on {day_name}s."
              
         start_t = shift['start_time'] # datetime.time
         end_t = shift['end_time']
-        
-        # 3. Get Bookings
-        bookings = await self.db.get_doctor_bookings(doc_id, query_date)
         # Convert bookings to minutes for easier math
         booked_minutes = set()
         for b_dt in bookings:
@@ -224,15 +238,39 @@ CRITICAL CONSTRAINTS:
             
         if not available_slots:
             return f"Dr. {doc['name']} is fully booked on {day_name}, {query_date}. Would you like to check another date?"
+
+        # Filter slots based on user constraints
+        filtered_slots = []
+        for slot in available_slots:
+            # slot is "09:00 AM" string. Parse to compare.
+            s_t = datetime.strptime(slot, "%I:%M %p").time()
             
-        # Voice Optimization: Don't read 20 slots
+            if before_time:
+                try:
+                    b_t = parser.parse(before_time).time()
+                    if s_t >= b_t:
+                        continue
+                except: pass
+            
+            if after_time:
+                try:
+                    a_t = parser.parse(after_time).time()
+                    if s_t <= a_t:
+                        continue
+                except: pass
+                
+            filtered_slots.append(slot)
+            
+        if not filtered_slots:
+            return f"Dr. {doc['name']} has openings on {day_name}, but none match your time range. (Openings: {', '.join(available_slots[:3])}...)"
+
+        # Voice Optimization
         final_response = ""
-        if len(available_slots) > 4:
-            final_response = f"Dr. {doc['name']} has plenty of availability on {day_name}, starting at {available_slots[0]}. I also have {available_slots[-1]}. What time works for you?"
+        if len(filtered_slots) > 5:
+             final_response = f"Dr. {doc['name']} has availability starting at {filtered_slots[0]}. I also have {filtered_slots[-1]} and others in between. What time do you prefer?"
         else:
-            final_response = f"I have the following openings: {', '.join(available_slots)}. Which one works?"
+             final_response = f"I have the following openings: {', '.join(filtered_slots)}. Which works for you?"
             
-        # Return the availability to the LLM so it can answer naturally
         return final_response
 
     @function_tool()
@@ -258,6 +296,11 @@ CRITICAL CONSTRAINTS:
         try:
             p_date = parser.parse(date_str, fuzzy=True, default=datetime.now()).date()
             p_time = parser.parse(time_str, default=datetime.now()).time()
+            
+            # Enforce 30-minute slot alignment
+            if p_time.minute not in [0, 30]:
+                return f"We only book appointments on the hour or half-hour (e.g. {p_time.hour}:00 or {p_time.hour}:30). Please choose a standard slot."
+                
             full_dt = datetime.combine(p_date, p_time)
         except:
              return "I'm having trouble with the date or time format. Could you repeat it?"
@@ -279,6 +322,8 @@ CRITICAL CONSTRAINTS:
             if dob:
                 try:
                     parsed_dob = parser.parse(dob).date()
+                    if parsed_dob > datetime.now().date():
+                        return "Date of Birth cannot be in the future. Please provide a valid date."
                 except:
                     pass # Optional, ignore if fail
             
@@ -295,7 +340,7 @@ CRITICAL CONSTRAINTS:
             )
             
             # 4. Insert Appointment
-            app_id = await self.db.create_appointment(
+            app_id, error_msg = await self.db.create_appointment(
                 account_id=acc_id,
                 pt_id=pt_id,
                 doc_id=doc['doc_id'],
@@ -304,7 +349,7 @@ CRITICAL CONSTRAINTS:
             )
             
             if not app_id:
-                return "I'm sorry, there was a problem booking the appointment. The slot may already be taken. Please try a different time."
+                return f"Booking failed: {error_msg}"
             
             check_in_time = (full_dt - timedelta(minutes=15)).strftime("%I:%M %p")
             return f"Confirmed. You are booked with Dr. {doc['name']} on {full_dt.strftime('%A, %B %d')} at {full_dt.strftime('%I:%M %p')}. Please arrive by {check_in_time}."
@@ -314,6 +359,24 @@ CRITICAL CONSTRAINTS:
             return "I apologize, something went wrong while saving the appointment."
 
     # --- 3. Manage Appointments ---
+
+    @function_tool()
+    @log_tool_call
+    async def get_patient_details(
+        self,
+        ctx: RunContext,
+        mobile_no: Annotated[str, "Patient's mobile number"],
+        dob: Annotated[str, "Date of Birth (YYYY-MM-DD)"]
+    ) -> str:
+        """
+        Retrieve patient details. strictly requires DOB for verification.
+        """
+        details = await self.db.get_verified_patient_details(mobile_no, dob)
+        if not details:
+             return "Verification failed. The details (DOB) do not match our records or the patient is not found."
+             
+        # Format details
+        return f"Patient Found: {details['name']} (Gender: {details['gender']}, Blood Type: {details['blood_type'] or 'N/A'})."
 
     @function_tool()
     @log_tool_call
@@ -330,6 +393,11 @@ CRITICAL CONSTRAINTS:
         target_id = mobile_no or self.caller_identity
         if not target_id:
              return "I need a mobile number or ID to look up appointments."
+
+        # Validate mobile length if it looks like a phone number (digits)
+        cleaned_id = ''.join(filter(str.isdigit, target_id))
+        if len(cleaned_id) < 10:
+             return "The mobile number must be at least 10 digits. Please check the number and try again."
              
         logger.info(f"Finding appointments for {target_id}")
         apps = await self.db.find_upcoming_appointments(target_id)
@@ -338,10 +406,10 @@ CRITICAL CONSTRAINTS:
             return "I couldn't find any upcoming appointments for that number."
             
         # Format for voice
-        response = "I found the following:\n"
+        response = "I found these appointments:\n"
         for i, app in enumerate(apps, 1):
             dt_str = app['date_time'].strftime("%B %d at %I:%M %p")
-            response += f"{i}: With Dr. {app['doc_name']} on {dt_str}.\n"
+            response += f"{i}: Dr. {app['doc_name']} on {dt_str} (Patient: {app['pt_name']}).\n"
             
         final_text = response + "Which one would you like to update?"
         return final_text
@@ -353,11 +421,12 @@ CRITICAL CONSTRAINTS:
         ctx: RunContext,
         appointment_index: Annotated[int, "The number of the appointment from the list (1-based)"],
         new_date: Annotated[str, "New desired date"],
-        new_time: Annotated[str, "New desired time"]
+        new_time: Annotated[str, "New desired time"],
+        new_doctor_name: Annotated[Optional[str], "Name of new doctor if changing"] = None
     ) -> str:
         """
         Reschedule a specifically identified appointment.
-        Must call find_patient_appointments first.
+        Can optionally change the doctor.
         """
         target_id = self.caller_identity
         apps = await self.db.find_upcoming_appointments(target_id)
@@ -375,9 +444,14 @@ CRITICAL CONSTRAINTS:
         except:
              return "Invalid date or time format."
              
-        # Reuse same doctor
+        # Reuse same doctor unless new one specified
         doc_name = target_app['doc_name']
+        if new_doctor_name:
+             doc_name = new_doctor_name
+             
         doc = await self.db.get_doctor_details(doc_name)
+        if not doc:
+             return f"I couldn't find a doctor named {doc_name}."
         
         # Strictly, we should check availability again here, but for brevity in this tool 
         # we will attempt the update. Real implementation should check avail first.

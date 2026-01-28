@@ -66,7 +66,14 @@ logger = logging.getLogger("receptionist-framework")
 def prewarm(proc: JobProcess):
     """Prewarm function to load models before the agent starts."""
     logger.info("Prewarming: Loading Silero VAD model...")
-    proc.userdata["vad"] = silero.VAD.load(min_speech_duration=0.2, activation_threshold=0.4)
+    # Optimized for fast turn-taking: 
+    # - min_silence_duration=0.2: detects end of speech very quickly
+    # - min_speech_duration=0.1: catches short "yes/no"
+    proc.userdata["vad"] = silero.VAD.load(
+        min_speech_duration=0.1, 
+        min_silence_duration=0.2, 
+        activation_threshold=0.4
+    )
     logger.info(f"Prewarming complete. Available agents: {list_agent_types()}")
 
 
@@ -196,14 +203,19 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     logger.info(f"Connected to room: {ctx.room.name}")
     
-    # 3. Wait for participant
+    # 3. Initialize services early (Parallel to waiting for participant if possible, 
+    # but for now we do it before wait_for_participant to ensure it's hot)
+    memory_service = get_memory_service()
+    await memory_service.initialize()
+    logger.info("Memory service pre-initialized")
+
+    # 4. Wait for participant
     participant = await ctx.wait_for_participant()
     caller_id = participant.identity
     logger.info(f"Participant joined: {caller_id}")
     
-    # 4. Fetch memory from PostgreSQL (if enabled)
-    memory_service = get_memory_service()
-    await memory_service.initialize()
+    # 5. Fetch memory from PostgreSQL (if enabled)
+    # Service already initialized, just fetch
     memory = await memory_service.fetch_user(caller_id)
     
     if memory:
@@ -221,7 +233,7 @@ async def entrypoint(ctx: JobContext):
         vad=ctx.proc.userdata["vad"],
         stt=deepgram.STT(),
         llm=openai.LLM(),
-        tts=cartesia.TTS(),
+        tts=cartesia.TTS(model="sonic-3"),
         allow_interruptions=True,
     )
     

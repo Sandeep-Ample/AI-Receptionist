@@ -1,0 +1,49 @@
+
+==================== SESSION INITIALIZATION ====================
+[10:56:19] JOB ID: AJ_Ypjkf5CtdFg9
+[10:56:19] AGENT TYPE: hospital
+[10:56:19] START TIME: 2026-01-28T10:56:19.169484
+------------------------------------------------------------
+[10:56:19] SYSTEM: Logger initialized and starting connection sequence
+[10:56:20] SYSTEM: Attaching event listeners to session
+[10:56:20] STATE CHANGE: listening
+[10:56:21] STATE CHANGE: speaking
+[10:56:24] TRANSCRIPT (AGENT): Thank you for calling City Health Clinic. How can I assist you today?
+[10:56:24] STATE CHANGE: listening
+[10:56:27] TRANSCRIPT (USER): Want to book an appointment
+[10:56:27] STATE CHANGE: thinking
+[10:56:29] STATE CHANGE: speaking
+[10:56:33] TRANSCRIPT (AGENT): Of course, can you please tell me what symptoms or concerns you’d like to be seen for?
+[10:56:33] STATE CHANGE: listening
+[10:56:38] TRANSCRIPT (USER): am having to come
+[10:56:38] STATE CHANGE: thinking
+[10:56:40] STATE CHANGE: speaking
+[10:56:48] STATE CHANGE: listening
+[10:56:50] TRANSCRIPT (USER): I'm I'm feeling
+[10:56:50] TRANSCRIPT (AGENT): Just to clarify, are you coming in for a general checkup or do you have any symptoms or specific health concerns you’d like to discuss? This helps me connect you with the right
+[10:56:50] STATE CHANGE: thinking
+[10:56:51] STATE CHANGE: listening
+[10:56:52] TRANSCRIPT (USER): throat pain.
+[10:56:52] STATE CHANGE: thinking
+------------------------------------------------------------
+[10:56:53] TOOL CALL: Executing: search_specialty_by_symptom
+[10:56:53] TOOL ARGS: {'symptom': 'throat pain'}
+[10:56:53] TOOL RESULT: I couldn't match that symptom to a specialist. A General Physician is usually a good start. Shall I find one?
+------------------------------------------------------------
+[10:56:55] STATE CHANGE: speaking
+[10:57:03] TRANSCRIPT (AGENT): Throat pain is often best checked by a general physician. Is your pain constant, or does it come and go? Do you also have fever or difficulty swallowing?
+[10:57:03] STATE CHANGE: listening
+[10:57:07] TRANSCRIPT (USER): It has been
+[10:57:07] TRANSCRIPT (USER): days now.
+[10:57:08] TRANSCRIPT (USER): And
+[10:57:08] STATE CHANGE: thinking
+[10:57:09] STATE CHANGE: listening
+[10:57:10] TRANSCRIPT (USER): I don't have fever.
+[10:57:10] STATE CHANGE: thinking
+[10:57:12] STATE CHANGE: speaking
+[10:57:21] TRANSCRIPT (AGENT): Thank you for sharing that. Do you have any difficulty swallowing, or is there any swelling or hoarseness in your voice? Would you like me to find a general physician available for an appointment?
+[10:57:21] STATE CHANGE: listening
+[10:57:41] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[10:57:41] END TIME: 2026-01-28T10:57:41.004894

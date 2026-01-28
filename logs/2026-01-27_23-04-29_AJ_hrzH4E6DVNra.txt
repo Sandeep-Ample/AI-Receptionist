@@ -1,0 +1,27 @@
+
+==================== SESSION INITIALIZATION ====================
+[23:04:29] JOB ID: AJ_hrzH4E6DVNra
+[23:04:29] AGENT TYPE: hospital
+[23:04:29] START TIME: 2026-01-27T23:04:29.206864
+------------------------------------------------------------
+[23:04:29] SYSTEM: Logger initialized and starting connection sequence
+[23:04:31] SYSTEM: Attaching event listeners to session
+[23:04:31] STATE CHANGE: listening
+[23:04:32] STATE CHANGE: speaking
+[23:04:34] TRANSCRIPT (AGENT): Thank you for calling City Health Clinic. How can I assist you today?
+[23:04:34] STATE CHANGE: listening
+[23:04:37] TRANSCRIPT (USER): Yeah. Hi there.
+[23:04:37] STATE CHANGE: thinking
+[23:04:40] STATE CHANGE: speaking
+[23:04:42] TRANSCRIPT (AGENT): Hello! How may I help you with your health needs today?
+[23:04:42] STATE CHANGE: listening
+[23:04:55] TRANSCRIPT (USER): Hello?
+[23:04:55] STATE CHANGE: thinking
+[23:04:57] STATE CHANGE: speaking
+[23:05:00] TRANSCRIPT (AGENT): How can I assist you with your appointment or health concerns today?
+[23:05:00] STATE CHANGE: listening
+[23:05:03] TRANSCRIPT (USER): What can you do for me?
+[23:05:03] STATE CHANGE: thinking
+[23:05:08] STATE CHANGE: speaking
+[23:05:17] TRANSCRIPT (AGENT): I can help you find the right specialist, check a doctor’s schedule, book or modify an appointment, and assist with any cancellations you need. Let me know what you’d like to do.
+[23:05:17] STATE CHANGE: listening

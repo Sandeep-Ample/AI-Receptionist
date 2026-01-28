@@ -1,0 +1,21 @@
+
+==================== SESSION INITIALIZATION ====================
+[11:20:11] JOB ID: AJ_DjR5mbD2pVEH
+[11:20:11] AGENT TYPE: hospital
+[11:20:11] START TIME: 2026-01-28T11:20:11.225751
+------------------------------------------------------------
+[11:20:11] SYSTEM: Logger initialized and starting connection sequence
+[11:20:13] SYSTEM: Attaching event listeners to session
+[11:20:13] STATE CHANGE: listening
+[11:20:14] STATE CHANGE: speaking
+[11:20:15] STATE CHANGE: listening
+[11:20:16] TRANSCRIPT (USER): Thank you for calling
+[11:20:16] TRANSCRIPT (AGENT): Thank you for calling
+[11:20:17] STATE CHANGE: thinking
+[11:20:18] STATE CHANGE: speaking
+[11:20:21] TRANSCRIPT (AGENT): You’re welcome, how can I help you today?
+[11:20:21] STATE CHANGE: listening
+[11:20:45] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[11:20:45] END TIME: 2026-01-28T11:20:45.948662

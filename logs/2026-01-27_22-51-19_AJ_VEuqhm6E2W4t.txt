@@ -1,0 +1,61 @@
+
+==================== SESSION INITIALIZATION ====================
+[22:51:19] JOB ID: AJ_VEuqhm6E2W4t
+[22:51:19] AGENT TYPE: hospital
+[22:51:19] START TIME: 2026-01-27T22:51:19.882377
+------------------------------------------------------------
+[22:51:19] SYSTEM: Logger initialized and starting connection sequence
+[22:51:21] SYSTEM: Attaching event listeners to session
+[22:51:21] STATE CHANGE: listening
+[22:51:22] STATE CHANGE: speaking
+[22:51:25] TRANSCRIPT (AGENT): Thank you for calling City Health Clinic. How can I assist you today?
+[22:51:25] STATE CHANGE: listening
+[22:51:29] TRANSCRIPT (USER): Have fever.
+[22:51:29] STATE CHANGE: thinking
+------------------------------------------------------------
+[22:51:36] TOOL CALL: Executing: search_specialty_by_symptom
+[22:51:36] TOOL ARGS: {'symptom': 'fever'}
+[22:51:36] TOOL RESULT: For 'fever', you should see a Endocrinology specialist. Shall I find a Endocrinology for you?
+------------------------------------------------------------
+[22:51:38] STATE CHANGE: speaking
+[22:51:48] TRANSCRIPT (AGENT): Fever can sometimes be linked to infections or other underlying issues. May I ask how long you've had the fever, and if you're experiencing any other symptoms like chills, headache, or body aches?
+[22:51:48] STATE CHANGE: listening
+[22:51:51] TRANSCRIPT (USER): Nothing like that.
+[22:51:51] STATE CHANGE: thinking
+[22:51:58] STATE CHANGE: speaking
+[22:52:05] TRANSCRIPT (AGENT): Thank you for confirming you have no other symptoms besides the fever. Would you like me to help you find a suitable Endocrinology specialist for an appointment?
+[22:52:05] STATE CHANGE: listening
+[22:52:09] TRANSCRIPT (USER): Yeah.
+[22:52:09] STATE CHANGE: thinking
+------------------------------------------------------------
+[22:52:11] TOOL CALL: Executing: get_doctors_by_specialty
+[22:52:11] TOOL ARGS: {'specialty': 'Endocrinology'}
+[22:52:11] TOOL RESULT: We have the following Endocrinology specialists: Dr. Meera Iyer. Who would you like to see?
+------------------------------------------------------------
+[22:52:13] STATE CHANGE: speaking
+[22:52:18] TRANSCRIPT (AGENT): We have Doctor Meera Iyer available in Endocrinology. Would you like to check her schedule for an appointment?
+[22:52:18] STATE CHANGE: listening
+[22:52:21] TRANSCRIPT (USER): Sure.
+[22:52:21] STATE CHANGE: thinking
+------------------------------------------------------------
+[22:52:23] TOOL CALL: Executing: get_doctor_schedule
+[22:52:23] TOOL ARGS: {'doctor_name': 'Dr. Meera Iyer'}
+[22:52:23] TOOL RESULT: Dr. Dr. Meera Iyer is available on Wednesday from 11:00 AM to 3:00 PM, and Friday from 2:00 PM to 5:00 PM. Which day works for you?
+------------------------------------------------------------
+[22:52:25] STATE CHANGE: speaking
+[22:52:32] TRANSCRIPT (AGENT): Doctor Meera Iyer is available on Wednesday from 11 AM to 3 PM, or Friday from 2 PM to 5 PM. Which day and time would you prefer?
+[22:52:32] STATE CHANGE: listening
+[22:52:40] TRANSCRIPT (USER): Okay.
+[22:52:40] STATE CHANGE: thinking
+[22:52:42] STATE CHANGE: speaking
+[22:52:47] TRANSCRIPT (AGENT): Would you like to book your appointment for Wednesday or Friday with Doctor Meera Iyer? Let me know your preferred time.
+[22:52:47] STATE CHANGE: listening
+[22:52:50] TRANSCRIPT (USER): Nothing.
+[22:52:50] STATE CHANGE: thinking
+[22:52:54] STATE CHANGE: speaking
+[22:53:01] TRANSCRIPT (AGENT): No problem at all. If you decide to book later or have other questions, just let me know. Is there anything else I can help you with today?
+[22:53:01] STATE CHANGE: listening
+[22:53:22] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[22:53:22] END TIME: 2026-01-27T22:53:22.959779

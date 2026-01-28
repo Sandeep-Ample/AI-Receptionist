@@ -140,13 +140,34 @@ class UniversalLogger:
                 import asyncio
                 asyncio.create_task(self._publish_update(session, "transcription", text, "user"))
         
-        @session.on("agent_speech_committed")
-        def on_agent_speech(event):
-            text = getattr(event, "text", str(event))
-            self.log("TRANSCRIPT (AGENT)", text)
-            # Publish to UI
-            import asyncio
-            asyncio.create_task(self._publish_update(session, "transcription", text, "agent"))
+        @session.on("speech_started")
+        def on_speech_started(event):
+             # This event acts as a backup/faster trigger for agent transcripts
+             # It might not carry the full text, but let's check.
+             # Actually, 'conversation_item_added' is usually the source of truth for the text,
+             # but it might be fired LATE (after generation).
+             # Let's try to get text from speech_created if available, but usually that's just a handle.
+             pass
+        
+        @session.on("conversation_item_added")
+        def on_conversation_item(event):
+            # This event fires for both user and agent messages
+            item = getattr(event, "item", None)
+            if item is None:
+                return
+            
+            role = getattr(item, "role", None)
+            content = getattr(item, "content", None)
+            
+            # Only process assistant (agent) messages here, user messages are handled by user_input_transcribed
+            if role == "assistant" and content:
+                # Handle content that might be a list
+                text = content if isinstance(content, str) else " ".join(str(c) for c in content)
+                if text and text.strip():
+                    self.log("TRANSCRIPT (AGENT)", text)
+                    # Publish to UI
+                    import asyncio
+                    asyncio.create_task(self._publish_update(session, "transcription", text, "agent"))
             
         @session.on("agent_state_changed")
         def on_state_change(event):

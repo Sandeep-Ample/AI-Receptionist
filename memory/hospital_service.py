@@ -1,5 +1,6 @@
 import logging
 import json
+import asyncio
 from datetime import datetime, date, time, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 from memory.service import get_memory_service
@@ -80,11 +81,14 @@ class HospitalService:
             WHERE LOWER(sy.sym_name) LIKE $1
             LIMIT 1;
         """
+        tasks = [self._fetchrow(query, f"%{token}%") for token in symptom_tokens]
+        # Run all queries in parallel
+        results = await asyncio.gather(*tasks)
+        
         matches = []
-        for token in symptom_tokens:
-            row = await self._fetchrow(query, f"%{token}%")
+        for i, row in enumerate(results):
             if row:
-                matches.append((token, row["spec_name"]))
+                matches.append((symptom_tokens[i], row["spec_name"]))
         return matches
 
     async def get_doctors_by_specialty(self, specialty: str) -> List[str]:
@@ -189,8 +193,30 @@ class HospitalService:
             logger.error(f"Error creating patient: {e}")
             raise e
 
-    async def create_appointment(self, account_id: int, pt_id: int, doc_id: int, reason: str, dt: datetime) -> Optional[int]:
-        """Insert new appointment. Returns app_id on success, None on failure."""
+    async def get_verified_patient_details(self, mobile_no: str, dob: str) -> Optional[Dict[str, Any]]:
+        """
+        Verify patient by mobile and DOB, then return details.
+        DOB input format expected: YYYY-MM-DD (as string from LLM)
+        """
+        query = """
+            SELECT p.name, p.gender, p.dob, p.blood_type, pa.mobile_no
+            FROM patient p
+            JOIN patient_account pa ON p.account_id = pa.account_id
+            WHERE pa.mobile_no = $1 AND p.dob = $2::date
+        """
+        try:
+            return await self._fetchrow(query, mobile_no, dob)
+        except Exception as e:
+            logger.error(f"Error verifying patient: {e}")
+            return None
+
+    async def create_appointment(self, account_id: int, pt_id: int, doc_id: int, reason: str, dt: datetime) -> Tuple[Optional[int], str]:
+        """
+        Insert new appointment. 
+        Returns (app_id, error_message). 
+        If success, error_message is empty.
+        If fail, app_id is None and error_message contains details.
+        """
         query = """
             INSERT INTO appointment (account_id, pt_id, doc_id, reason, date_time, app_status) 
             VALUES ($1, $2, $3, $4, $5, 'Booked')
@@ -201,16 +227,21 @@ class HospitalService:
                 await self.memory_service.initialize()
             if not self.memory_service._pool:
                 logger.error("Database pool not available for appointment creation")
-                return None
+                return None, "System error: Database unavailable"
         
         try:
             async with self.memory_service._pool.acquire() as conn:
                 app_id = await conn.fetchval(query, account_id, pt_id, doc_id, reason, dt)
                 logger.info(f"Created appointment {app_id} for patient {pt_id} with doctor {doc_id}")
-                return app_id
+                return app_id, ""
         except Exception as e:
+            err_str = str(e).lower()
             logger.error(f"Error creating appointment: {e}")
-            return None
+            if "unique_doc_slot" in err_str:
+                return None, "Doctor is already booked at this time."
+            if "unique_patient_slot" in err_str:
+                return None, "Patient already has an appointment at this time with another doctor."
+            return None, "Failed to book appointment due to a system error."
 
     # --- Manage Appointments ---
 

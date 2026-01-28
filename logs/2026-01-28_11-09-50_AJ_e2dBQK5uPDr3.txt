@@ -1,0 +1,41 @@
+
+==================== SESSION INITIALIZATION ====================
+[11:09:50] JOB ID: AJ_e2dBQK5uPDr3
+[11:09:50] AGENT TYPE: hospital
+[11:09:50] START TIME: 2026-01-28T11:09:50.488024
+------------------------------------------------------------
+[11:09:50] SYSTEM: Logger initialized and starting connection sequence
+[11:09:51] SYSTEM: Attaching event listeners to session
+[11:09:51] STATE CHANGE: listening
+[11:09:52] STATE CHANGE: speaking
+[11:09:55] TRANSCRIPT (AGENT): Thank you for calling City Health Clinic. How can I assist you today?
+[11:09:55] STATE CHANGE: listening
+[11:10:00] TRANSCRIPT (USER): I want to know if we can teach. Right?
+[11:10:01] STATE CHANGE: thinking
+[11:10:02] STATE CHANGE: listening
+------------------------------------------------------------
+[11:10:02] TOOL CALL: Executing: handle_general_query
+[11:10:02] TOOL ARGS: {'query': 'Can patients or outsiders teach at the clinic?'}
+[11:10:02] TOOL RESULT: I can help you with appointments and doctor information. For other queries, please check our website.
+------------------------------------------------------------
+[11:10:02] STATE CHANGE: thinking
+[11:10:02] STATE CHANGE: listening
+[11:10:03] STATE CHANGE: speaking
+[11:10:04] STATE CHANGE: listening
+[11:10:07] STATE CHANGE: speaking
+[11:10:13] STATE CHANGE: listening
+[11:10:15] TRANSCRIPT (USER): Who is available for dermatologists?
+[11:10:15] TRANSCRIPT (AGENT): I actually support appointment and doctor information requests. For teaching or other special inquiries, please visit our website
+[11:10:15] STATE CHANGE: thinking
+------------------------------------------------------------
+[11:10:16] TOOL CALL: Executing: get_doctors_by_specialty
+[11:10:16] TOOL ARGS: {'specialty': 'dermatologist'}
+[11:10:16] TOOL RESULT: I couldn't find any active doctors for dermatologist at the moment.
+------------------------------------------------------------
+[11:10:17] STATE CHANGE: speaking
+[11:10:23] TRANSCRIPT (AGENT): Currently, we don’t have any dermatologists available at the clinic. Is there anything else I can help you with today?
+[11:10:23] STATE CHANGE: listening
+[11:10:50] SYSTEM: Session cleanup initiated
+
+==================== SESSION ENDED ====================
+[11:10:50] END TIME: 2026-01-28T11:10:50.584044
