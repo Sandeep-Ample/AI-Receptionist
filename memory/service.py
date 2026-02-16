@@ -6,12 +6,17 @@ Handles:
 - Fetching user memory before first greeting
 - Saving conversation summaries after calls
 - Graceful fallback when DB is unavailable
+
+This service now uses the enhanced DatabaseConnection for better
+connection management and monitoring.
 """
 
 import json
 import logging
 import os
 from typing import Optional
+
+from database import get_database_connection
 
 logger = logging.getLogger("receptionist-framework")
 
@@ -44,19 +49,22 @@ class MemoryService:
             database_url: PostgreSQL connection string. 
                          If not provided, reads from DATABASE_URL env var.
         """
-        self.database_url = database_url or os.getenv("DATABASE_URL", "")
-        self._pool: Optional["asyncpg.Pool"] = None
+        # Use the enhanced database connection
+        self.db_connection = get_database_connection()
         self._initialized = False
         
-        if not self.database_url:
+        if not self.db_connection.is_enabled:
             logger.info("No DATABASE_URL - memory features disabled (no-memory mode)")
-        elif not ASYNCPG_AVAILABLE:
-            logger.warning("asyncpg not available - memory features disabled")
+    
+    @property
+    def _pool(self):
+        """Access the connection pool from DatabaseConnection."""
+        return self.db_connection._pool if self.db_connection else None
     
     @property
     def is_enabled(self) -> bool:
         """Check if memory features are enabled."""
-        return bool(self.database_url and ASYNCPG_AVAILABLE)
+        return self.db_connection.is_enabled if self.db_connection else False
     
     async def initialize(self) -> bool:
         """
@@ -72,12 +80,9 @@ class MemoryService:
             return False
         
         try:
-            self._pool = await asyncpg.create_pool(
-                self.database_url,
-                min_size=2,
-                max_size=10,
-                command_timeout=10.0
-            )
+            # Initialize the database connection
+            if not await self.db_connection.initialize():
+                return False
             
             # Create schema if it doesn't exist
             async with self._pool.acquire() as conn:
@@ -89,7 +94,6 @@ class MemoryService:
             
         except Exception as e:
             logger.error(f"Failed to initialize memory service: {e}")
-            self._pool = None
             return False
     
     async def fetch_user(self, caller_id: str) -> Optional[dict]:
@@ -196,9 +200,8 @@ class MemoryService:
     
     async def close(self):
         """Close the connection pool."""
-        if self._pool:
-            await self._pool.close()
-            self._pool = None
+        if self.db_connection:
+            await self.db_connection.close()
             self._initialized = False
             logger.info("Memory service closed")
 

@@ -1,0 +1,218 @@
+name: Deploy to LiveKit Cloud
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Run tests before deployment
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run configuration tests
+        run: |
+          pytest tests/test_configuration_files.py -v
+          pytest tests/test_env_validation.py -v
+          pytest tests/test_migrations.py -v
+      
+      - name: Run database tests
+        run: |
+          pytest tests/test_database.py -v
+
+  # Database migration job
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install alembic psycopg2-binary python-dotenv
+      
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running database migrations..."
+          alembic upgrade head || {
+            echo "Migration failed, attempting rollback..."
+            alembic downgrade -1
+            exit 1
+          }
+      
+      - name: Verify migration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          alembic current
+
+  # Deploy to LiveKit Cloud
+  deploy:
+    name: Deploy Agent to LiveKit Cloud
+    runs-on: ubuntu-latest
+    needs: [test, migrate]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install LiveKit CLI
+        run: |
+          curl -sSL https://get.livekit.io/cli | bash
+          sudo mv livekit-cli /usr/local/bin/
+      
+      - name: Deploy to LiveKit Cloud
+        env:
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+        run: |
+          echo "Deploying to LiveKit Cloud..."
+          livekit-cli cloud deploy \
+            --project hospital-receptionist \
+            --config livekit.yaml \
+            --env DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            --env OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            --env DEEPGRAM_API_KEY="${{ secrets.DEEPGRAM_API_KEY }}" \
+            --env CARTESIA_API_KEY="${{ secrets.CARTESIA_API_KEY }}" \
+            --env AGENT_TYPE="hospital" \
+            --env LOG_LEVEL="INFO" \
+            --env ENVIRONMENT="${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}"
+      
+      - name: Verify deployment
+        env:
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        run: |
+          echo "Verifying deployment..."
+          livekit-cli cloud agent list
+      
+      - name: Rollback on failure
+        if: failure()
+        env:
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        run: |
+          echo "Deployment failed, attempting rollback..."
+          livekit-cli cloud deploy rollback --version previous || echo "Rollback failed or not available"
+
+  # Health check after deployment
+  health-check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+      
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+      
+      - name: Check agent health
+        env:
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        run: |
+          # Install LiveKit CLI if not already installed
+          if ! command -v livekit-cli &> /dev/null; then
+            curl -sSL https://get.livekit.io/cli | bash
+            sudo mv livekit-cli /usr/local/bin/
+          fi
+          
+          echo "Checking agent status..."
+          livekit-cli cloud agent list
+          
+          echo "Health check completed successfully"
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Health check failed! Agent may not be running correctly."
+          exit 1
+
+  # Notify deployment status
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy, health-check]
+    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Deployment Success
+        if: needs.deploy.result == 'success' && needs.health-check.result == 'success'
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}"
+          echo "Commit: ${{ github.sha }}"
+      
+      - name: Deployment Failed
+        if: needs.deploy.result == 'failure' || needs.health-check.result == 'failure'
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}"
+          echo "Commit: ${{ github.sha }}"
+          exit 1

@@ -1,5 +1,5 @@
 # LiveKit Agents Framework
-livekit-agents>=0.8.0
+livekit-agents>=1.2.0
 livekit-plugins-deepgram>=0.6.0
 livekit-plugins-openai>=0.8.0
 livekit-plugins-cartesia>=0.4.0
@@ -11,8 +11,24 @@ livekit-api>=0.6.0
 # Environment & Config
 python-dotenv>=1.0.0
 
-# Web UI
+# Web UI (optional - for local testing only)
 streamlit>=1.28.0
 
 # PostgreSQL Async Driver (for persistent memory)
 asyncpg>=0.29.0
+
+# Database Migrations
+alembic>=1.13.0
+
+# Database ORM and Connection Pooling
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# Date parsing utilities
+python-dateutil>=2.8.2
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+hypothesis>=6.92.0
+pyyaml>=6.0.1

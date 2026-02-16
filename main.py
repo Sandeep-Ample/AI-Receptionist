@@ -28,6 +28,18 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
+# Load environment variables first
+load_dotenv()
+
+# Validate environment configuration before importing other modules
+from config import validate_environment, ConfigurationError
+
+try:
+    config = validate_environment()
+except ConfigurationError as e:
+    logger.error(f"Configuration validation failed: {e}")
+    raise SystemExit(1)
+
 from livekit import rtc
 from livekit.agents import (
     Agent,
