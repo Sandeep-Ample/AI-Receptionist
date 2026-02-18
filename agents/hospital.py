@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, time
 from dateutil import parser
 from livekit.agents import RunContext, function_tool
 
-from agents.base import BaseReceptionist
+from agents.base import BaseReceptionist, get_timezone_aware_now
 from agents.registry import register_agent
 from memory.hospital_service import get_hospital_service
 from tools.session_logger import log_tool_call
@@ -76,8 +76,8 @@ Always ask some follow-ups about the problem it will be not added is database bu
 
     @property
     def SYSTEM_PROMPT(self) -> str:
-        """Generate system prompt with current date and time."""
-        now = datetime.now()
+        """Generate system prompt with current date and time in configured timezone."""
+        now = get_timezone_aware_now()
         return self.SYSTEM_PROMPT_TEMPLATE.format(
             current_date=now.strftime("%B %d, %Y"),
             current_day=now.strftime("%A"),

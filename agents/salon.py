@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, time, date
 from dateutil import parser
 from livekit.agents import RunContext, function_tool
 
-from agents.base import BaseReceptionist
+from agents.base import BaseReceptionist, get_timezone_aware_now
 from agents.registry import register_agent
 from memory.salon_service import get_salon_service
 from tools.session_logger import log_tool_call
@@ -83,8 +83,8 @@ CRITICAL CONSTRAINTS:
 
     @property
     def SYSTEM_PROMPT(self) -> str:
-        """Generate system prompt with current date and time."""
-        now = datetime.now()
+        """Generate system prompt with current date and time in configured timezone."""
+        now = get_timezone_aware_now()
         return self.SYSTEM_PROMPT_TEMPLATE.format(
             current_date=now.strftime("%B %d, %Y"),
             current_day=now.strftime("%A"),

@@ -16,7 +16,9 @@ Usage:
 """
 
 import logging
+import os
 from abc import abstractmethod
+from datetime import datetime
 from typing import Optional
 
 from livekit.agents import Agent
@@ -25,6 +27,28 @@ from prompts.templates import build_prompt
 from tools.common import COMMON_TOOLS
 
 logger = logging.getLogger("receptionist-framework")
+
+
+def get_timezone_aware_now() -> datetime:
+    """
+    Get current datetime in the configured timezone.
+    
+    Uses TIMEZONE environment variable (default: Asia/Kolkata).
+    Returns timezone-aware datetime object.
+    """
+    try:
+        from zoneinfo import ZoneInfo
+    except ImportError:
+        # Python < 3.9 fallback
+        from backports.zoneinfo import ZoneInfo
+    
+    timezone_name = os.getenv("TIMEZONE", "Asia/Kolkata")
+    try:
+        tz = ZoneInfo(timezone_name)
+        return datetime.now(tz)
+    except Exception as e:
+        logger.warning(f"Invalid timezone '{timezone_name}', using UTC: {e}")
+        return datetime.now(ZoneInfo("UTC"))
 
 
 class BaseReceptionist(Agent):
