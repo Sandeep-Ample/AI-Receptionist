@@ -477,7 +477,16 @@ Always ask some follow-ups about the problem it will be not added is database bu
             new_dt = datetime.combine(p_date, p_time)
         except:
              return "Invalid date or time format."
-             
+        
+        # Check if the date is in the past
+        if p_date < datetime.now().date():
+            return "I cannot reschedule to a past date."
+        
+        # Check if the time slot has already passed for today
+        now = datetime.now()
+        if p_date == now.date() and p_time <= now.time():
+            return "That time has already passed today. Please choose a future time."
+              
         # Reuse same doctor unless new one specified
         doc_name = target_app['doc_name']
         if new_doctor_name:

@@ -520,6 +520,11 @@ CRITICAL CONSTRAINTS:
         if p_date < datetime.now().date():
             return "I cannot reschedule to a past date."
         
+        # Check if the time slot has already passed for today
+        now = datetime.now()
+        if p_date == now.date() and p_time <= now.time():
+            return "That time has already passed today. Please choose a future time."
+        
         # Calculate new end time (estimate 30 min if we don't have duration)
         duration = 30  # Default, ideally we'd look up the service duration
         end_dt = datetime.combine(p_date, p_time) + timedelta(minutes=duration)
