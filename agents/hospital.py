@@ -237,6 +237,15 @@ Always ask some follow-ups about the problem it will be not added is database bu
                 slot_time = time(h, m).strftime("%I:%M %p")
                 available_slots.append(slot_time)
             current_m += 30
+        
+        # 4b. Filter out past time slots if booking for today
+        now = datetime.now()
+        if query_date == now.date():
+            current_time_minutes = now.hour * 60 + now.minute
+            available_slots = [
+                slot for slot in available_slots
+                if datetime.strptime(slot, "%I:%M %p").hour * 60 + datetime.strptime(slot, "%I:%M %p").minute > current_time_minutes
+            ]
             
         if not available_slots:
             return f"Dr. {doc['name']} is fully booked on {day_name}, {query_date}. Would you like to check another date?"
@@ -293,6 +302,10 @@ Always ask some follow-ups about the problem it will be not added is database bu
         """
         logger.info(f"Booking: {patient_name} with {doctor_name} at {date_str} {time_str}")
         ctx.disallow_interruptions()
+        
+        # Validate name
+        if not patient_name or len(patient_name.strip()) < 2:
+            return "I need your full name to make a booking. Could you please provide your name?"
         
         # 1. Parse Date/Time with default=now() for relative dates
         try:

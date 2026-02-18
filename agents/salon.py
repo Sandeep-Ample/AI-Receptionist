@@ -301,6 +301,11 @@ CRITICAL CONSTRAINTS:
             booking_date, start_range, end_range, duration_minutes, stylist_id
         )
         
+        # 4b. Filter out past time slots if booking for today
+        now = datetime.now()
+        if booking_date == now.date():
+            slots = [s for s in slots if s['start_time'] > now.time()]
+        
         if not slots:
             # Try to offer alternatives if specific time failed
             return f"I couldn't find any openings for {s_name} on {booking_date.strftime('%A')} around {time_query}. Would you like to check a different time or different stylist?"
@@ -347,6 +352,10 @@ CRITICAL CONSTRAINTS:
         """
         logger.info(f"Booking: {customer_name} with {stylist_name} for {service_name}")
         ctx.disallow_interruptions()
+        
+        # Validate name
+        if not customer_name or len(customer_name.strip()) < 2:
+            return "I need your full name to make a booking. Could you please provide your name?"
         
         # Validate phone number
         phone_digits = ''.join(filter(str.isdigit, customer_phone))
