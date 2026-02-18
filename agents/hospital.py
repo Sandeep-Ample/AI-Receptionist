@@ -19,6 +19,8 @@ from agents.base import BaseReceptionist
 from agents.registry import register_agent
 from memory.hospital_service import get_hospital_service
 from tools.session_logger import log_tool_call
+from tools.email_service import get_email_service
+from tools.otp_service import get_otp_service
 
 logger = logging.getLogger("hospital-agent")
 
@@ -350,6 +352,25 @@ Always ask some follow-ups about the problem it will be not added is database bu
             
             if not app_id:
                 return f"Booking failed: {error_msg}"
+            
+            # 5. Send confirmation email (if email is available)
+            patient_email = None
+            if self.caller_identity and '@' in self.caller_identity:
+                patient_email = self.caller_identity
+            
+            if patient_email:
+                try:
+                    email_service = get_email_service()
+                    email_service.send_booking_confirmation(
+                        to_email=patient_email,
+                        patient_name=patient_name,
+                        doctor_name=doc['name'],
+                        appointment_date=full_dt.strftime('%A, %B %d, %Y'),
+                        appointment_time=full_dt.strftime('%I:%M %p'),
+                        reason=reason
+                    )
+                except Exception as email_err:
+                    logger.warning(f"Failed to send confirmation email: {email_err}")
             
             check_in_time = (full_dt - timedelta(minutes=15)).strftime("%I:%M %p")
             return f"Confirmed. You are booked with Dr. {doc['name']} on {full_dt.strftime('%A, %B %d')} at {full_dt.strftime('%I:%M %p')}. Please arrive by {check_in_time}."

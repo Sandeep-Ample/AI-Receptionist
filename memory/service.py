@@ -28,7 +28,15 @@ except ImportError:
     ASYNCPG_AVAILABLE = False
     logger.warning("asyncpg not installed - memory features disabled")
 
-from memory.models import CREATE_TABLE_SQL, FETCH_USER_SQL, UPSERT_USER_SQL, UPDATE_SUMMARY_SQL
+from memory.models import (
+    CREATE_TABLE_SQL, 
+    FETCH_USER_SQL, 
+    FETCH_USER_BY_EMAIL_SQL,
+    UPSERT_USER_SQL, 
+    UPSERT_USER_BY_EMAIL_SQL,
+    UPDATE_SUMMARY_SQL,
+    UPDATE_APPROVAL_SQL
+)
 
 
 class MemoryService:
@@ -101,11 +109,11 @@ class MemoryService:
         Fetch user memory from PostgreSQL.
         
         Args:
-            caller_id: The participant identity (phone number or user ID)
+            caller_id: The participant identity (email or phone number)
         
         Returns:
             Dict with user memory or None if not found/disabled.
-            Keys: phone_number, name, last_summary, last_call, call_count, metadata
+            Keys: phone_number, email, name, last_summary, last_call, call_count, is_approved, metadata
         """
         if not self._initialized or not self._pool:
             if self.is_enabled:
@@ -116,11 +124,14 @@ class MemoryService:
         
         try:
             async with self._pool.acquire() as conn:
-                row = await conn.fetchrow(FETCH_USER_SQL, caller_id)
+                # Try email first, then phone number
+                row = await conn.fetchrow(FETCH_USER_BY_EMAIL_SQL, caller_id)
+                if not row:
+                    row = await conn.fetchrow(FETCH_USER_SQL, caller_id)
                 
                 if row:
                     result = dict(row)
-                    logger.info(f"Found memory for caller: {caller_id} (name: {result.get('name')})")
+                    logger.info(f"Found memory for caller: {caller_id} (name: {result.get('name')}, approved: {result.get('is_approved')})")
                     return result
                 else:
                     logger.info(f"No memory found for caller: {caller_id}")
@@ -130,9 +141,42 @@ class MemoryService:
             logger.error(f"Error fetching user memory: {e}")
             return None
     
+    async def fetch_user_by_email(self, email: str) -> Optional[dict]:
+        """
+        Fetch user memory by email address.
+        
+        Args:
+            email: User's email address
+        
+        Returns:
+            Dict with user memory or None if not found/disabled.
+        """
+        if not self._initialized or not self._pool:
+            if self.is_enabled:
+                await self.initialize()
+            if not self._pool:
+                return None
+        
+        try:
+            async with self._pool.acquire() as conn:
+                row = await conn.fetchrow(FETCH_USER_BY_EMAIL_SQL, email)
+                
+                if row:
+                    result = dict(row)
+                    logger.info(f"Found user by email: {email} (name: {result.get('name')}, approved: {result.get('is_approved')})")
+                    return result
+                else:
+                    logger.info(f"No user found with email: {email}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Error fetching user by email: {e}")
+            return None
+    
     async def save_user(
         self, 
         caller_id: str, 
+        email: Optional[str] = None,
         name: Optional[str] = None,
         summary: Optional[str] = None,
         metadata: Optional[dict] = None
@@ -142,6 +186,7 @@ class MemoryService:
         
         Args:
             caller_id: The participant identity
+            email: User's email address (preferred)
             name: User's name (optional, won't overwrite if None)
             summary: Conversation summary
             metadata: Additional JSON metadata
@@ -155,20 +200,131 @@ class MemoryService:
         try:
             metadata_json = json.dumps(metadata or {})
             
-            async with self._pool.acquire() as conn:
-                await conn.execute(
-                    UPSERT_USER_SQL,
-                    caller_id,
-                    name,
-                    summary,
-                    metadata_json
-                )
-            
-            logger.info(f"Saved memory for caller: {caller_id}")
+            # Use email-based upsert if email is provided
+            if email:
+                async with self._pool.acquire() as conn:
+                    await conn.execute(
+                        UPSERT_USER_BY_EMAIL_SQL,
+                        email,
+                        name,
+                        False  # is_approved - default to false for new users
+                    )
+                logger.info(f"Saved memory for email: {email}")
+            else:
+                async with self._pool.acquire() as conn:
+                    await conn.execute(
+                        UPSERT_USER_SQL,
+                        caller_id,
+                        name,
+                        summary,
+                        metadata_json
+                    )
+                logger.info(f"Saved memory for caller: {caller_id}")
             return True
             
         except Exception as e:
             logger.error(f"Error saving user memory: {e}")
+            return False
+    
+    async def create_user_with_approval(
+        self,
+        email: str,
+        name: Optional[str] = None,
+        password_hash: Optional[str] = None,
+        is_approved: bool = False
+    ) -> bool:
+        """
+        Create a new user with optional approval status.
+        
+        Args:
+            email: User's email address (required, used as unique identifier)
+            name: User's name
+            password_hash: Hashed password
+            is_approved: Whether user is approved to use the system
+        
+        Returns:
+            True if user created successfully, False if email already exists
+        """
+        if not self._pool:
+            return False
+        
+        try:
+            async with self._pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO user_memory (email, name, password_hash, is_approved, approved_at)
+                    VALUES ($1, $2, $3, $4, CASE WHEN $4 = TRUE THEN NOW() ELSE NULL END)
+                    ON CONFLICT (email) 
+                    DO NOTHING
+                    """,
+                    email,
+                    name,
+                    password_hash,
+                    is_approved
+                )
+                
+            logger.info(f"Created user: {email}, approved: {is_approved}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
+            return False
+    
+    async def check_approval_status(self, email: str) -> Optional[dict]:
+        """
+        Check if a user is approved to use the system.
+        
+        Args:
+            email: User's email address
+        
+        Returns:
+            Dict with is_approved status and user info, or None if not found
+        """
+        if not self._pool:
+            return None
+        
+        try:
+            async with self._pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT email, name, is_approved, approved_at FROM user_memory WHERE email = $1",
+                    email
+                )
+                
+                if row:
+                    return dict(row)
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error checking approval status: {e}")
+            return None
+    
+    async def update_approval_status(self, email: str, is_approved: bool) -> bool:
+        """
+        Update user's approval status.
+        
+        Args:
+            email: User's email address
+            is_approved: New approval status
+        
+        Returns:
+            True if update succeeded, False otherwise
+        """
+        if not self._pool:
+            return False
+        
+        try:
+            async with self._pool.acquire() as conn:
+                await conn.execute(
+                    UPDATE_APPROVAL_SQL,
+                    email,
+                    is_approved
+                )
+            
+            logger.info(f"Updated approval status for {email}: {is_approved}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error updating approval status: {e}")
             return False
     
     async def update_summary(self, caller_id: str, summary: str) -> bool:

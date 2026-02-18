@@ -51,7 +51,7 @@ def upgrade() -> None:
         -- Patient Account table
         CREATE TABLE IF NOT EXISTS patient_account (
             account_id SERIAL PRIMARY KEY,
-            mobile_no VARCHAR(15) UNIQUE NOT NULL,
+            mobile_no VARCHAR(64) UNIQUE NOT NULL,
             created_at TIMESTAMPTZ DEFAULT now(),
             updated_at TIMESTAMPTZ DEFAULT now()
         );

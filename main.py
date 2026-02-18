@@ -27,6 +27,7 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 # Load environment variables first
 load_dotenv()
@@ -88,57 +89,48 @@ def prewarm(proc: JobProcess):
     )
     logger.info(f"Prewarming complete. Available agents: {list_agent_types()}")
 
-
 async def _generate_summary(session: AgentSession) -> Optional[str]:
-    """
-    Generate a concise 15-word summary of the conversation using the LLM.
-    
-    Args:
-        session: The agent session with chat context
-        
-    Returns:
-        A brief summary string or None if generation fails
-    """
+    """Generate a concise 15-word summary using OpenAI directly."""
     try:
-        # Build a summary prompt from the conversation
+        # Build transcript from chat context
         if not session.current_agent or not session.current_agent.chat_ctx:
-             return None
+            return None
+        
         messages = session.current_agent.chat_ctx.items
         if len(messages) < 2:
             return None
         
-        # Create a simple transcript - filter out FunctionCall objects
+        # Build transcript
         transcript_parts = []
         for msg in messages:
-            # Skip items that don't have a role attribute (e.g., FunctionCall)
             if not hasattr(msg, 'role') or not hasattr(msg, 'content'):
                 continue
             if msg.role in ("user", "assistant") and msg.content:
                 role = "Caller" if msg.role == "user" else "Agent"
-                # Handle content that might be a list
                 content = msg.content if isinstance(msg.content, str) else str(msg.content)
                 transcript_parts.append(f"{role}: {content}")
         
         if not transcript_parts:
             return None
         
-        transcript = "\n".join(transcript_parts[-10:])  # Last 10 exchanges
+        transcript = "\n".join(transcript_parts[-10:])
         
-        # Use a quick LLM call to summarize
-        llm = openai.LLM(model="gpt-4o-mini")
+        # Use OpenAI SDK directly (not LiveKit's wrapper)
+
+        client = AsyncOpenAI()
         
         summary_prompt = f"""Summarize this phone call in exactly 15 words or less.
-Focus on: what the caller needed and the outcome.
+        Focus on: what the caller needed and the outcome.
 
-Transcript:
-{transcript}
+        Transcript:
+        {transcript}
 
-Summary:"""
-
-        # Quick non-streaming call
-        response = await llm.chat(
-            chat_ctx=None,
-            messages=[{"role": "user", "content": summary_prompt}]
+        Summary:"""
+        
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": summary_prompt}],
+            max_tokens=50
         )
         
         summary = response.choices[0].message.content.strip()
@@ -150,7 +142,8 @@ Summary:"""
         return None
 
 
-async def _save_summary_async(session: AgentSession, caller_id: str, caller_name: Optional[str]):
+
+async def _save_summary_async(session: AgentSession, caller_email: str, caller_name: Optional[str]):
     """
     Async task to generate summary and save to database.
     This runs in the background so the agent can hang up immediately.
@@ -162,30 +155,31 @@ async def _save_summary_async(session: AgentSession, caller_id: str, caller_name
         summary = await _generate_summary(session)
         
         if summary:
-            # Save to database
+            # Save to database using email as the primary identifier
             await memory_service.save_user(
-                caller_id=caller_id,
+                caller_id=caller_email,  # Use email as caller_id
+                email=caller_email,      # Also pass email explicitly
                 name=caller_name,
                 summary=summary
             )
-            logger.info(f"Saved conversation summary for {caller_id}")
+            logger.info(f"Saved conversation summary for {caller_email}")
         else:
             logger.info("No summary generated - conversation too short")
             
         # Log conversation history (async to avoid blocking entrypoint exit)
-        logger.info("=" * 40)
-        logger.info("CONVERSATION HISTORY")
-        if session.current_agent and session.current_agent.chat_ctx:
-            for msg in session.current_agent.chat_ctx.items:
-                # Skip items that don't have a role attribute (e.g., FunctionCall)
-                if not hasattr(msg, 'role'):
-                    continue
-                content = msg.content if hasattr(msg, 'content') else "[no content]"
-                # Handle content that might be a list
-                if isinstance(content, list):
-                    content = ' '.join(str(c) for c in content)
-                logger.info(f"[{msg.role.upper()}]: {content}")
-        logger.info("=" * 40)
+        # logger.info("=" * 40)
+        # logger.info("CONVERSATION HISTORY")
+        # if session.current_agent and session.current_agent.chat_ctx:
+        #     for msg in session.current_agent.chat_ctx.items:
+        #         # Skip items that don't have a role attribute (e.g., FunctionCall)
+        #         if not hasattr(msg, 'role'):
+        #             continue
+        #         content = msg.content if hasattr(msg, 'content') else "[no content]"
+        #         # Handle content that might be a list
+        #         if isinstance(content, list):
+        #             content = ' '.join(str(c) for c in content)
+        #         logger.info(f"[{msg.role.upper()}]: {content}")
+        # logger.info("=" * 40)
 
     except Exception as e:
         logger.error(f"Error in async summary save: {e}")
@@ -193,6 +187,15 @@ async def _save_summary_async(session: AgentSession, caller_id: str, caller_name
 
 async def entrypoint(ctx: JobContext):
     """Main entrypoint for the voice agent framework."""
+    
+    def extract_email_from_identity(identity: str) -> str:
+        """
+        Extract sanitized email from participant identity.
+        Identity format: {sanitized_email}_user_{random}
+        """
+        if '_user_' in identity:
+            return identity.split('_user_')[0]
+        return identity
     
     # 1. Determine which agent type to use
     agent_type = os.getenv("AGENT_TYPE", "default")
@@ -224,14 +227,24 @@ async def entrypoint(ctx: JobContext):
     # 4. Wait for participant
     participant = await ctx.wait_for_participant()
     caller_id = participant.identity
-    logger.info(f"Participant joined: {caller_id}")
+    
+    # Extract email from identity (identity format: {sanitized_email}_user_{random})
+    caller_email = extract_email_from_identity(caller_id)
+    logger.info(f"Participant joined: {caller_id} (extracted email: {caller_email})")
     
     # 5. Fetch memory from PostgreSQL (if enabled)
-    # Service already initialized, just fetch
-    memory = await memory_service.fetch_user(caller_id)
+    # Service already initialized, just fetch using email
+    memory = await memory_service.fetch_user_by_email(caller_email)
+    
+    # Also check approval status
+    approval_status = await memory_service.check_approval_status(caller_email)
+    
+    if approval_status and not approval_status.get('is_approved', False):
+        logger.warning(f"User {caller_email} is not approved to use the system")
+        # Could send a message to the user here indicating they're not approved
     
     if memory:
-        logger.info(f"Returning caller: {memory.get('name')} (call #{memory.get('call_count', 1)})")
+        logger.info(f"Returning caller: {memory.get('name')} (call #{memory.get('call_count', 1)}, approved: {memory.get('is_approved')})")
     else:
         logger.info("New caller - no memory found")
     
@@ -316,7 +329,7 @@ async def entrypoint(ctx: JobContext):
         # We await it here to ensure the process stays alive until it's done.
         logger.info("Session ending - running summary generation...")
         try:
-            await _save_summary_async(session, caller_id, caller_name)
+            await _save_summary_async(session, caller_email, caller_name)
         except Exception as e:
             logger.error(f"Failed to generate summary: {e}")
         

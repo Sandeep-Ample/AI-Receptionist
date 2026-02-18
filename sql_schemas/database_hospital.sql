@@ -25,7 +25,7 @@ CREATE TYPE weekday_enum AS ENUM
 -- =========================
 CREATE TABLE patient_account (
     account_id serial PRIMARY KEY,
-    mobile_no varchar(15) NOT NULL UNIQUE,
+    mobile_no varchar(64) NOT NULL UNIQUE,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()
 );
@@ -141,18 +141,24 @@ CREATE TABLE spec_sym (
 -- USER MEMORY (VOICE AGENT MEMORY)
 -- =========================
 CREATE TABLE user_memory (
-    phone_number varchar(64) PRIMARY KEY,
+    phone_number varchar(64),
+    email varchar(255) UNIQUE,
     name varchar(128),
     last_summary text,
     last_call timestamptz DEFAULT now(),
     call_count integer DEFAULT 1,
+    is_approved boolean DEFAULT FALSE,
+    approved_at timestamptz,
+    password_hash varchar(255),
     metadata jsonb DEFAULT '{}'::jsonb,
     created_at timestamptz DEFAULT now(),
-    updated_at timestamptz DEFAULT now()
+    updated_at timestamptz DEFAULT now(),
+    PRIMARY KEY (phone_number, email)
 );
 
-CREATE INDEX idx_user_memory_last_call
-ON user_memory (last_call DESC);
+CREATE INDEX idx_user_memory_email ON user_memory (email);
+CREATE INDEX idx_user_memory_last_call ON user_memory (last_call DESC);
+CREATE INDEX idx_user_memory_approved ON user_memory (is_approved) WHERE is_approved = TRUE;
 
 -- =========================
 -- CALL SESSION (AI CORE)
