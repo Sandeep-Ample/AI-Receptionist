@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd app_ui/agent-starter-react && pnpm build",
+  "outputDirectory": "app_ui/agent-starter-react/.next",
+  "installCommand": "cd app_ui/agent-starter-react && pnpm install"
+}
